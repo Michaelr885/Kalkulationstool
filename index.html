@@ -69,7 +69,7 @@
 
     <aside class="live-list-container">
       <div class="list-header">
-        <h3 id="currentSectionTitle">Positionen</h3>
+        <h3 id="currentSectionTitle" onclick="app.renameSection()" style="cursor: pointer;" title="Sektion umbenennen">Positionen</h3>
         <button id="duplicateSectionBtn" class="btn-icon" title="Sektion duplizieren">
           <i data-lucide="copy"></i>
         </button>
@@ -97,9 +97,10 @@
       
       <div class="footer-actions">
         <button id="resetProjectBtn" style="background: var(--danger); color: white; border: none; flex: 0 0 auto; width: 44px;" title="Alles löschen"><i data-lucide="refresh-ccw"></i></button>
-        <button id="importJsonBtn" class="btn-secondary" title="Projekt laden">Import</button>
+        <button id="importJsonBtn" class="btn-secondary" title="Projekt laden">Laden</button>
         <button id="exportJsonBtn" class="btn-secondary">Export</button>
-        <button id="exportSupplierBtn" class="btn-primary">Stückliste</button>
+        <button id="exportMaterialBtn" class="btn-primary" style="background: var(--success);">Materialliste</button>
+        <button id="exportCalcBtn" class="btn-primary">Kalkulation</button>
       </div>
       <input type="file" id="importFileInput" style="display: none;" accept=".json">
     </aside>
@@ -123,6 +124,18 @@
         <button class="btn-icon" onclick="app.toggleRohrklasseOverlay(false)"><i data-lucide="x"></i></button>
       </div>
       <div id="rohrklasseList" class="overlay-list"></div>
+    </div>
+  </div>
+
+  <!-- Export Vorschau Modal -->
+  <div id="exportModal" class="modal-overlay">
+    <div class="modal-content" style="max-width: 600px; width: 95%;">
+      <h3 id="exportModalTitle">Vorschau</h3>
+      <textarea id="exportTextarea" readonly style="width: 100%; height: 300px; margin-top: 15px; background: var(--bg-base); color: var(--text-main); border: 1px solid var(--border-subtle); padding: 10px; border-radius: 6px; font-family: monospace; font-size: 0.8rem; resize: none;"></textarea>
+      <div style="display: flex; gap: 10px; margin-top: 20px;">
+        <button class="btn-primary" style="flex: 1;" onclick="app.copyFromExportModal()">Kopieren</button>
+        <button class="btn-secondary" style="flex: 1;" onclick="app.toggleModal('exportModal', false)">Schließen</button>
+      </div>
     </div>
   </div>
 

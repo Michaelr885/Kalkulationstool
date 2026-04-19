@@ -8,129 +8,49 @@ const APP_CONFIG = {
         {
           "id": "rohr",
           "bezeichnung": "Rohrleitung montieren",
-          "rib_nummer": "1.1.1",
-          "zeit_in_minuten": 12.0,
+          "typ": "material",
           "einheit": "m",
-          "eingabe_art": "eingabe"
+          "eingabe_art": "eingabe",
+          "dimensionen_daten": {
+            "DN 15": { "rib": "1.1.1.1", "zeit": 10.0, "bestellname": "Edelstahlrohr V4A 1.4404 18x1.0mm" },
+            "DN 20": { "rib": "1.1.1.2", "zeit": 12.0, "bestellname": "Edelstahlrohr V4A 1.4404 22x1.2mm" },
+            "DN 25": { "rib": "1.1.1.3", "zeit": 14.5, "bestellname": "Edelstahlrohr V4A 1.4404 28x1.2mm" }
+          }
         },
         {
           "id": "bogen_90",
           "bezeichnung": "Bogen 90°",
-          "rib_nummer": "1.1.2",
-          "zeit_in_minuten": 8.5,
+          "typ": "material",
           "einheit": "Stk",
-          "eingabe_art": "klick"
+          "eingabe_art": "klick",
+          "dimensionen_daten": {
+            "DN 15": { "rib": "1.1.2.1", "zeit": 8.0, "bestellname": "V4A Schweißbogen 90° DN 15" },
+            "DN 20": { "rib": "1.1.2.2", "zeit": 9.5, "bestellname": "V4A Schweißbogen 90° DN 20" },
+            "DN 25": { "rib": "1.1.2.3", "zeit": 12.0, "bestellname": "V4A Schweißbogen 90° DN 25" }
+          }
         },
         {
           "id": "t_stueck",
           "bezeichnung": "T-Stück",
-          "rib_nummer": "1.1.3",
-          "zeit_in_minuten": 15.0,
+          "typ": "material",
           "einheit": "Stk",
           "eingabe_art": "zweite_dn_auswahl",
           "gueltige_kombinationen": {
-            "DN 15": ["DN 15"],
-            "DN 20": ["DN 20", "DN 15"],
-            "DN 25": ["DN 25", "DN 20", "DN 15"],
-            "DN 32": ["DN 32", "DN 25", "DN 20"],
-            "DN 40": ["DN 40", "DN 32", "DN 25"],
-            "DN 50": ["DN 50", "DN 40", "DN 32", "DN 25"],
-            "DN 65": ["DN 65", "DN 50", "DN 40"],
-            "DN 80": ["DN 80", "DN 65", "DN 50"],
-            "DN 100": ["DN 100", "DN 80", "DN 65"]
+            "DN 50": ["DN 50", "DN 40", "DN 32"]
+          },
+          "dimensionen_daten": {
+            "DN 50 / DN 50": { "rib": "1.1.3.1", "zeit": 35.0, "bestellname": "V4A T-Stück egal DN 50" },
+            "DN 50 / DN 40": { "rib": "1.1.3.2", "zeit": 32.0, "bestellname": "V4A T-Stück red. 50/40/50" }
           }
         },
         {
           "id": "schweissnaht",
           "bezeichnung": "Schweißnaht",
+          "typ": "leistung",
           "rib_nummer": "1.1.4",
           "zeit_in_minuten": 25.0,
           "einheit": "Stk",
           "eingabe_art": "klick"
-        },
-        {
-          "id": "reduzierung",
-          "bezeichnung": "Reduzierung",
-          "rib_nummer": "1.1.5",
-          "zeit_in_minuten": 10.0,
-          "einheit": "Stk",
-          "eingabe_art": "zweite_dn_auswahl",
-          "gueltige_kombinationen": {
-            "DN 20": ["DN 15"],
-            "DN 25": ["DN 20", "DN 15"],
-            "DN 32": ["DN 25", "DN 20"],
-            "DN 40": ["DN 32", "DN 25"],
-            "DN 50": ["DN 40", "DN 32", "DN 25"],
-            "DN 65": ["DN 50", "DN 40"],
-            "DN 80": ["DN 65", "DN 50"],
-            "DN 100": ["DN 80", "DN 65"]
-          }
-        },
-        {
-          "id": "flansch",
-          "bezeichnung": "Vorschweißflansch",
-          "rib_nummer": "1.1.6",
-          "zeit_in_minuten": 18.0,
-          "einheit": "Stk",
-          "eingabe_art": "klick",
-          "erlaubte_dns": ["DN 25", "DN 32", "DN 40", "DN 50", "DN 65", "DN 80", "DN 100"]
-        }
-      ]
-    },
-    {
-      "id": "c_stahl_press",
-      "name": "C-Stahl (Presssystem)",
-      "dimensionen": ["15 mm", "18 mm", "22 mm", "28 mm", "35 mm", "42 mm", "54 mm"],
-      "bauteile": [
-        {
-          "id": "rohr",
-          "bezeichnung": "Rohrleitung (Press)",
-          "rib_nummer": "2.1.1",
-          "zeit_in_minuten": 5.0,
-          "einheit": "m",
-          "eingabe_art": "eingabe"
-        },
-        {
-          "id": "bogen_90",
-          "bezeichnung": "Pressbogen 90°",
-          "rib_nummer": "2.1.2",
-          "zeit_in_minuten": 3.0,
-          "einheit": "Stk",
-          "eingabe_art": "klick"
-        },
-        {
-          "id": "t_stueck",
-          "bezeichnung": "Press-T-Stück",
-          "rib_nummer": "2.1.3",
-          "zeit_in_minuten": 6.0,
-          "einheit": "Stk",
-          "eingabe_art": "zweite_dn_auswahl",
-          "gueltige_kombinationen": {
-            "15 mm": ["15 mm"],
-            "18 mm": ["18 mm", "15 mm"],
-            "22 mm": ["22 mm", "18 mm", "15 mm"],
-            "28 mm": ["28 mm", "22 mm", "18 mm"],
-            "35 mm": ["35 mm", "28 mm", "22 mm"],
-            "42 mm": ["42 mm", "35 mm", "28 mm"],
-            "54 mm": ["54 mm", "42 mm", "35 mm"]
-          }
-        },
-        {
-          "id": "reduzierung",
-          "bezeichnung": "Press-Reduzierung",
-          "rib_nummer": "2.1.4",
-          "zeit_in_minuten": 4.0,
-          "einheit": "Stk",
-          "zweite_dn_auswahl": true,
-          "eingabe_art": "zweite_dn_auswahl",
-          "gueltige_kombinationen": {
-            "18 mm": ["15 mm"],
-            "22 mm": ["18 mm", "15 mm"],
-            "28 mm": ["22 mm", "18 mm"],
-            "35 mm": ["28 mm", "22 mm"],
-            "42 mm": ["35 mm", "28 mm"],
-            "54 mm": ["42 mm", "35 mm"]
-          }
         }
       ]
     }
@@ -139,23 +59,15 @@ const APP_CONFIG = {
     {
       "id": "freigabe",
       "bezeichnung": "Freigabe / Einweisung",
+      "typ": "leistung",
       "rib_nummer": "S-01",
       "zeit_in_minuten": 30.0,
-      "einheit": "Stk",
-      "eingabe_art": "klick"
-    },
-    {
-      "id": "druckprobe",
-      "bezeichnung": "Druckprobe durchführen",
-      "rib_nummer": "S-02",
-      "zeit_in_minuten": 60.0,
       "einheit": "Stk",
       "eingabe_art": "klick"
     }
   ],
   "zeitfaktoren": [
     { "id": "standard", "name": "Standard", "faktor": 1.0 },
-    { "id": "zwangslage", "name": "Zwangslage", "faktor": 1.5 },
-    { "id": "ueberkopf", "name": "Überkopf", "faktor": 1.2 }
+    { "id": "zwangslage", "name": "Zwangslage", "faktor": 1.5 }
   ]
 };

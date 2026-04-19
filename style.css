@@ -68,7 +68,23 @@ main { flex: 1; overflow-y: auto; padding: var(--spacing-md); }
 .kachel-label { font-size: 0.8rem; font-weight: 500; }
 
 .input-wrapper { display: flex; gap: 4px; width: 100%; margin-top: 5px; }
-.input-wrapper input { width: 100%; background: var(--bg-base); border: 1px solid var(--border-subtle); color: white; padding: 6px; border-radius: 4px; text-align: center; }
+.input-wrapper input {
+  width: 100%;
+  background: var(--bg-base);
+  border: 1px solid var(--border-subtle);
+  color: white;
+  padding: 8px;
+  border-radius: 6px;
+  text-align: center;
+  appearance: textfield; /* Firefox */
+}
+
+/* Chrome, Safari, Edge, Opera: Remove Arrows */
+.input-wrapper input::-webkit-outer-spin-button,
+.input-wrapper input::-webkit-inner-spin-button {
+  -webkit-appearance: none;
+  margin: 0;
+}
 .add-btn { background: var(--accent-primary); border: none; color: white; padding: 0 10px; border-radius: 4px; cursor: pointer; }
 
 /* --- Aside / List --- */
