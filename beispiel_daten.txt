@@ -4,5 +4,8 @@ edelstahl_v4a	Edelstahl V4A	DN 15, DN 20, DN 25	rohr	Rohrleitung	DN 20	1.1.1.2	1
 edelstahl_v4a	Edelstahl V4A	DN 15, DN 20, DN 25	rohr	Rohrleitung	DN 25	1.1.1.3	14,5	m	eingabe	Edelstahlrohr 28x1.2
 edelstahl_v4a	Edelstahl V4A	DN 15, DN 20, DN 25	bogen_90	Bogen 90°	DN 15	1.1.2.1	8,0	Stk	klick	Schweißbogen 90° DN15
 edelstahl_v4a	Edelstahl V4A	DN 15, DN 20, DN 25	bogen_90	Bogen 90°	DN 20	1.1.2.2	9,5	Stk	klick	Schweißbogen 90° DN20
+edelstahl_v4a	Edelstahl V4A	DN 15, DN 20, DN 25	t_stueck	T-Stück	DN 15 / DN 15	1.1.3.1	35,0	Stk	zweite_dn_auswahl	V4A T-Stück egal DN 15
+edelstahl_v4a	Edelstahl V4A	DN 15, DN 20, DN 25	t_stueck	T-Stück	DN 20 / DN 15	1.1.3.2	32,0	Stk	zweite_dn_auswahl	V4A T-Stück red. 20/15
+edelstahl_v4a	Edelstahl V4A	DN 15, DN 20, DN 25	reduzierung	Reduzierung	DN 20 / DN 15	1.1.5.1	12,0	Stk	zweite_dn_auswahl	V4A Reduzierung 22x18
 edelstahl_v4a	Edelstahl V4A	DN 15, DN 20, DN 25	schweissnaht	Schweißnaht		1.1.4	25,0	Stk	klick	
 sonderleistung	(Global)		freigabe	Freigabe / Einweisung		S-01	30,0	Stk	klick	

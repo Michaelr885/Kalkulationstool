@@ -2,19 +2,35 @@ const APP_CONFIG = {
   "rohrklassen": [
     {
       "id": "edelstahl_v4a",
-      "name": "Edelstahl V4A (geschweißt)",
-      "dimensionen": ["DN 15", "DN 20", "DN 25", "DN 32", "DN 40", "DN 50", "DN 65", "DN 80", "DN 100"],
+      "name": "Edelstahl V4A",
+      "dimensionen": [
+        "DN 15",
+        "DN 20",
+        "DN 25"
+      ],
       "bauteile": [
         {
           "id": "rohr",
-          "bezeichnung": "Rohrleitung montieren",
+          "bezeichnung": "Rohrleitung",
           "typ": "material",
           "einheit": "m",
           "eingabe_art": "eingabe",
           "dimensionen_daten": {
-            "DN 15": { "rib": "1.1.1.1", "zeit": 10.0, "bestellname": "Edelstahlrohr V4A 1.4404 18x1.0mm" },
-            "DN 20": { "rib": "1.1.1.2", "zeit": 12.0, "bestellname": "Edelstahlrohr V4A 1.4404 22x1.2mm" },
-            "DN 25": { "rib": "1.1.1.3", "zeit": 14.5, "bestellname": "Edelstahlrohr V4A 1.4404 28x1.2mm" }
+            "DN 15": {
+              "rib": "1.1.1.1",
+              "zeit": 10,
+              "bestellname": "Edelstahlrohr 18x1.0"
+            },
+            "DN 20": {
+              "rib": "1.1.1.2",
+              "zeit": 12,
+              "bestellname": "Edelstahlrohr 22x1.2"
+            },
+            "DN 25": {
+              "rib": "1.1.1.3",
+              "zeit": 14.5,
+              "bestellname": "Edelstahlrohr 28x1.2"
+            }
           }
         },
         {
@@ -24,9 +40,16 @@ const APP_CONFIG = {
           "einheit": "Stk",
           "eingabe_art": "klick",
           "dimensionen_daten": {
-            "DN 15": { "rib": "1.1.2.1", "zeit": 8.0, "bestellname": "V4A Schweißbogen 90° DN 15" },
-            "DN 20": { "rib": "1.1.2.2", "zeit": 9.5, "bestellname": "V4A Schweißbogen 90° DN 20" },
-            "DN 25": { "rib": "1.1.2.3", "zeit": 12.0, "bestellname": "V4A Schweißbogen 90° DN 25" }
+            "DN 15": {
+              "rib": "1.1.2.1",
+              "zeit": 8,
+              "bestellname": "Schweißbogen 90° DN15"
+            },
+            "DN 20": {
+              "rib": "1.1.2.2",
+              "zeit": 9.5,
+              "bestellname": "Schweißbogen 90° DN20"
+            }
           }
         },
         {
@@ -35,20 +58,25 @@ const APP_CONFIG = {
           "typ": "material",
           "einheit": "Stk",
           "eingabe_art": "zweite_dn_auswahl",
-          "gueltige_kombinationen": {
-            "DN 15": ["DN 15"],
-            "DN 20": ["DN 20", "DN 15"],
-            "DN 25": ["DN 25", "DN 20", "DN 15"],
-            "DN 32": ["DN 32", "DN 25", "DN 20"],
-            "DN 40": ["DN 40", "DN 32", "DN 25"],
-            "DN 50": ["DN 50", "DN 40", "DN 32"],
-            "DN 65": ["DN 65", "DN 50", "DN 40"],
-            "DN 80": ["DN 80", "DN 65", "DN 50"],
-            "DN 100": ["DN 100", "DN 80", "DN 65"]
-          },
           "dimensionen_daten": {
-            "DN 50 / DN 50": { "rib": "1.1.3.1", "zeit": 35.0, "bestellname": "V4A T-Stück egal DN 50" },
-            "DN 50 / DN 40": { "rib": "1.1.3.2", "zeit": 32.0, "bestellname": "V4A T-Stück red. 50/40/50" }
+            "DN 15 / DN 15": {
+              "rib": "1.1.3.1",
+              "zeit": 35,
+              "bestellname": "V4A T-Stück egal DN 15"
+            },
+            "DN 20 / DN 15": {
+              "rib": "1.1.3.2",
+              "zeit": 32,
+              "bestellname": "V4A T-Stück red. 20/15"
+            }
+          },
+          "gueltige_kombinationen": {
+            "DN 15": [
+              "DN 15"
+            ],
+            "DN 20": [
+              "DN 15"
+            ]
           }
         },
         {
@@ -57,28 +85,28 @@ const APP_CONFIG = {
           "typ": "material",
           "einheit": "Stk",
           "eingabe_art": "zweite_dn_auswahl",
-          "gueltige_kombinationen": {
-            "DN 20": ["DN 15"],
-            "DN 25": ["DN 20", "DN 15"],
-            "DN 32": ["DN 25", "DN 20"],
-            "DN 40": ["DN 32", "DN 25"],
-            "DN 50": ["DN 40", "DN 32"],
-            "DN 65": ["DN 50", "DN 40"],
-            "DN 80": ["DN 65", "DN 50"],
-            "DN 100": ["DN 80", "DN 65"]
-          },
           "dimensionen_daten": {
-            "DN 25 / DN 20": { "rib": "1.1.5.1", "zeit": 12.0, "bestellname": "V4A Reduzierung 28x22" }
+            "DN 20 / DN 15": {
+              "rib": "1.1.5.1",
+              "zeit": 12,
+              "bestellname": "V4A Reduzierung 22x18"
+            }
+          },
+          "gueltige_kombinationen": {
+            "DN 20": [
+              "DN 15"
+            ]
           }
         },
         {
           "id": "schweissnaht",
           "bezeichnung": "Schweißnaht",
-          "typ": "leistung",
-          "rib_nummer": "1.1.4",
-          "zeit_in_minuten": 25.0,
+          "typ": "material",
           "einheit": "Stk",
-          "eingabe_art": "klick"
+          "eingabe_art": "klick",
+          "dimensionen_daten": {},
+          "rib_nummer": "01.01.2004",
+          "zeit_in_minuten": 25
         }
       ]
     }
@@ -89,13 +117,30 @@ const APP_CONFIG = {
       "bezeichnung": "Freigabe / Einweisung",
       "typ": "leistung",
       "rib_nummer": "S-01",
-      "zeit_in_minuten": 30.0,
+      "zeit_in_minuten": 30,
+      "einheit": "Stk",
+      "eingabe_art": "klick"
+    },
+    {
+      "id": "Test",
+      "bezeichnung": "Testlauf",
+      "typ": "leistung",
+      "rib_nummer": "S-02",
+      "zeit_in_minuten": 40,
       "einheit": "Stk",
       "eingabe_art": "klick"
     }
   ],
   "zeitfaktoren": [
-    { "id": "standard", "name": "Standard", "faktor": 1.0 },
-    { "id": "zwangslage", "name": "Zwangslage", "faktor": 1.5 }
+    {
+      "id": "standard",
+      "name": "Standard",
+      "faktor": 1
+    },
+    {
+      "id": "zwangslage",
+      "name": "Zwangslage",
+      "faktor": 1.5
+    }
   ]
 };

@@ -180,28 +180,32 @@
                 const lines = input.split('\n').map(line => line.trim()).filter(line => line.length > 0);
                 const rohrklassenMap = new Map();
                 const sonderleistungen = [];
+                let validLinesCount = 0;
 
                 lines.forEach((line, index) => {
                     const parts = line.split('\t');
-                    if (parts.length < 10) return; // Mindestens 10 Spalten nötig
+                    // Akzeptiere alte (9) und neue (11) Spaltenanzahl
+                    if (parts.length < 9) return;
 
                     let [rkId, rkName, dimsRaw, bId, bez, einzelDn, rib, zeitRaw, einheit, art, bestellname] = parts;
                     
-                    // Kopfzeile ignorieren
-                    if (index === 0 && (rkId.toLowerCase().includes('id') || rkId.toLowerCase().includes('rohrklasse'))) return;
+                    if (index === 0 && rkId && (rkId.toLowerCase().includes('id') || rkId.toLowerCase().includes('rohrklasse'))) return;
 
-                    const zeit = parseFloat(zeitRaw.replace(',', '.')) || 0;
+                    if (!rkId || !bId) return;
+                    validLinesCount++;
+
+                    const zeit = zeitRaw ? (parseFloat(zeitRaw.replace(',', '.')) || 0) : 0;
 
                     // Sonderleistungen separat behandeln
                     if (rkId.toLowerCase() === 'sonderleistung') {
                         sonderleistungen.push({
                             id: bId,
-                            bezeichnung: bez,
+                            bezeichnung: bez || bId,
                             typ: "leistung",
-                            rib_nummer: rib,
+                            rib_nummer: rib || "",
                             zeit_in_minuten: zeit,
-                            einheit: einheit,
-                            eingabe_art: art
+                            einheit: einheit || "Stk",
+                            eingabe_art: art || "klick"
                         });
                         return;
                     }
@@ -210,44 +214,54 @@
                     if (!rohrklassenMap.has(rkId)) {
                         rohrklassenMap.set(rkId, {
                             id: rkId,
-                            name: rkName,
-                            dimensionen: dimsRaw.split(',').map(d => d.trim()).filter(d => d.length > 0),
-                            bauteileMap: new Map() // Temporäre Map für Bauteile innerhalb der RK
+                            name: rkName || rkId,
+                            dimensionen: dimsRaw ? dimsRaw.split(',').map(d => d.trim()).filter(d => d.length > 0) : [],
+                            bauteileMap: new Map()
                         });
                     }
 
                     const rk = rohrklassenMap.get(rkId);
-                    
-                    // Bauteil initialisieren oder holen
                     if (!rk.bauteileMap.has(bId)) {
                         rk.bauteileMap.set(bId, {
                             id: bId,
-                            bezeichnung: bez,
-                            typ: "material", // Standard
-                            einheit: einheit,
-                            eingabe_art: art,
+                            bezeichnung: bez || bId,
+                            typ: "material",
+                            einheit: einheit || "Stk",
+                            eingabe_art: art || "klick",
                             dimensionen_daten: {}
                         });
                     }
 
                     const bt = rk.bauteileMap.get(bId);
-                    const zeit = parseFloat(zeitRaw.replace(',', '.')) || 0;
 
-                    // Wenn eine Einzel-DN angegeben ist, in dimensionen_daten speichern
                     if (einzelDn && einzelDn.trim().length > 0) {
-                        bt.dimensionen_daten[einzelDn.trim()] = {
-                            rib: rib,
+                        const dnStr = einzelDn.trim();
+                        bt.dimensionen_daten[dnStr] = {
+                            rib: rib || "",
                             zeit: zeit,
                             bestellname: bestellname || undefined
                         };
+
+                        // Automatische Erstellung der gültigen Kombinationen für T-Stücke/Reduzierungen
+                        if (dnStr.includes('/')) {
+                            if (!bt.gueltige_kombinationen) bt.gueltige_kombinationen = {};
+                            const [mainDn, secondDn] = dnStr.split('/').map(d => d.trim());
+                            if (!bt.gueltige_kombinationen[mainDn]) bt.gueltige_kombinationen[mainDn] = [];
+                            if (!bt.gueltige_kombinationen[mainDn].includes(secondDn)) {
+                                bt.gueltige_kombinationen[mainDn].push(secondDn);
+                            }
+                        }
                     } else {
-                        // Flache Struktur falls keine DN angegeben (z.B. Schweißnaht)
-                        bt.rib_nummer = rib;
+                        bt.rib_nummer = rib || "";
                         bt.zeit_in_minuten = zeit;
                     }
                 });
 
-                // Map-Struktur in finales Array umwandeln
+                if (validLinesCount === 0) {
+                    showStatus('Keine gültigen Daten gefunden. Prüfe das Spaltenformat!', 'error');
+                    return;
+                }
+
                 const result = {
                     rohrklassen: Array.from(rohrklassenMap.values()).map(rk => ({
                         id: rk.id,
@@ -255,11 +269,15 @@
                         dimensionen: rk.dimensionen,
                         bauteile: Array.from(rk.bauteileMap.values())
                     })),
-                    sonderleistungen: sonderleistungen
+                    sonderleistungen: sonderleistungen,
+                    zeitfaktoren: [
+                        { "id": "standard", "name": "Standard", "faktor": 1.0 },
+                        { "id": "zwangslage", "name": "Zwangslage", "faktor": 1.5 }
+                    ]
                 };
 
                 document.getElementById('outputArea').value = `const APP_CONFIG = ${JSON.stringify(result, null, 2)};`;
-                showStatus('JSON mit Multi-DN Support generiert!', 'success');
+                showStatus(`Erfolg! ${validLinesCount} Zeilen verarbeitet.`, 'success');
 
             } catch (err) {
                 console.error(err);
