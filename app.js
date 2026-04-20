@@ -226,16 +226,25 @@ class App {
 
     toggleModal(id, show) { document.getElementById(id).style.display = show ? 'flex' : 'none'; }
     openSecondDnModal(bt) {
-        const grid = document.getElementById('secondDnGrid'); document.getElementById('modalError').style.display = 'none';
-        this.toggleModal('secondDnModal', true); document.getElementById('secondDnModalTitle').innerText = `${bt.bezeichnung} - Ziel`;
-        grid.innerHTML = this.activeRohrklasse.dimensionen.map(dn => `<button class="dn-btn" onclick="app.handleSecondDnSelect('${bt.id}', '${dn}')">${dn}</button>`).join('');
+        const grid = document.getElementById('secondDnGrid'); 
+        document.getElementById('modalError').style.display = 'none';
+        this.toggleModal('secondDnModal', true); 
+        document.getElementById('secondDnModalTitle').innerText = `${bt.bezeichnung} - Ziel-DN`;
+
+        const valid = bt.gueltige_kombinationen ? bt.gueltige_kombinationen[this.activeDn] : null;
+
+        grid.innerHTML = this.activeRohrklasse.dimensionen.map(dn => {
+            const isValid = valid && valid.includes(dn);
+            return `<button class="dn-btn ${!isValid ? 'disabled' : ''}" 
+                    ${!isValid ? 'disabled' : ''} 
+                    onclick="app.handleSecondDnSelect('${bt.id}', '${dn}')">${dn}</button>`;
+        }).join('');
     }
 
     handleSecondDnSelect(btId, targetDn) {
         const bt = this.activeRohrklasse.bauteile.find(b => b.id === btId);
-        const valid = bt.gueltige_kombinationen ? bt.gueltige_kombinationen[this.activeDn] : null;
-        if (!valid || !valid.includes(targetDn)) { const err = document.getElementById('modalError'); err.innerText = `Ungültig!`; err.style.display = 'block'; return; }
-        this.addEntry(bt, 1, `${this.activeDn}/${targetDn}`); this.toggleModal('secondDnModal', false);
+        this.addEntry(bt, 1, `${this.activeDn} / ${targetDn}`); 
+        this.toggleModal('secondDnModal', false);
     }
 
     exportJson() { const b = new Blob([JSON.stringify(this.projekt, null, 2)], { type: 'application/json' }); const a = document.createElement('a'); a.href = URL.createObjectURL(b); a.download = `projekt_${this.projekt.name}.json`; a.click(); }

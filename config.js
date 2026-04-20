@@ -36,11 +36,39 @@ const APP_CONFIG = {
           "einheit": "Stk",
           "eingabe_art": "zweite_dn_auswahl",
           "gueltige_kombinationen": {
-            "DN 50": ["DN 50", "DN 40", "DN 32"]
+            "DN 15": ["DN 15"],
+            "DN 20": ["DN 20", "DN 15"],
+            "DN 25": ["DN 25", "DN 20", "DN 15"],
+            "DN 32": ["DN 32", "DN 25", "DN 20"],
+            "DN 40": ["DN 40", "DN 32", "DN 25"],
+            "DN 50": ["DN 50", "DN 40", "DN 32"],
+            "DN 65": ["DN 65", "DN 50", "DN 40"],
+            "DN 80": ["DN 80", "DN 65", "DN 50"],
+            "DN 100": ["DN 100", "DN 80", "DN 65"]
           },
           "dimensionen_daten": {
             "DN 50 / DN 50": { "rib": "1.1.3.1", "zeit": 35.0, "bestellname": "V4A T-Stück egal DN 50" },
             "DN 50 / DN 40": { "rib": "1.1.3.2", "zeit": 32.0, "bestellname": "V4A T-Stück red. 50/40/50" }
+          }
+        },
+        {
+          "id": "reduzierung",
+          "bezeichnung": "Reduzierung",
+          "typ": "material",
+          "einheit": "Stk",
+          "eingabe_art": "zweite_dn_auswahl",
+          "gueltige_kombinationen": {
+            "DN 20": ["DN 15"],
+            "DN 25": ["DN 20", "DN 15"],
+            "DN 32": ["DN 25", "DN 20"],
+            "DN 40": ["DN 32", "DN 25"],
+            "DN 50": ["DN 40", "DN 32"],
+            "DN 65": ["DN 50", "DN 40"],
+            "DN 80": ["DN 65", "DN 50"],
+            "DN 100": ["DN 80", "DN 65"]
+          },
+          "dimensionen_daten": {
+            "DN 25 / DN 20": { "rib": "1.1.5.1", "zeit": 12.0, "bestellname": "V4A Reduzierung 28x22" }
           }
         },
         {
