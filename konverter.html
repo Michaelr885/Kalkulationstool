@@ -1,0 +1,286 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Profi Config Konverter | Kalkulationstool</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --bg-base: #0f1115;
+            --bg-surface: #1a1d23;
+            --bg-card: #23272e;
+            --accent-primary: #3b82f6;
+            --accent-glow: rgba(59, 130, 246, 0.5);
+            --text-main: #e2e8f0;
+            --text-muted: #94a3b8;
+            --border-subtle: #2d333b;
+            --success: #10b981;
+            --spacing-md: 24px;
+            --radius-lg: 12px;
+            --radius-md: 8px;
+        }
+
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: var(--bg-base);
+            color: var(--text-main);
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+            line-height: 1.6;
+        }
+
+        .container {
+            width: 100%;
+            max-width: 1100px;
+            background: var(--bg-surface);
+            border: 1px solid var(--border-subtle);
+            border-radius: var(--radius-lg);
+            padding: var(--spacing-md);
+            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+        }
+
+        header {
+            text-align: left;
+            border-bottom: 1px solid var(--border-subtle);
+            padding-bottom: 16px;
+        }
+
+        h1 {
+            font-size: 1.5rem;
+            font-weight: 700;
+            background: linear-gradient(to right, #60a5fa, #3b82f6);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            margin-bottom: 4px;
+        }
+
+        p.subtitle { color: var(--text-muted); font-size: 0.9rem; }
+
+        .section-title {
+            font-size: 0.85rem;
+            font-weight: 600;
+            color: var(--text-muted);
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            margin-bottom: 8px;
+            display: block;
+        }
+
+        textarea {
+            width: 100%;
+            height: 250px;
+            background-color: var(--bg-card);
+            border: 1px solid var(--border-subtle);
+            border-radius: var(--radius-md);
+            color: var(--text-main);
+            padding: 16px;
+            font-family: 'Inter', monospace;
+            font-size: 0.8rem;
+            resize: vertical;
+            transition: all 0.2s ease;
+            outline: none;
+        }
+
+        textarea:focus { border-color: var(--accent-primary); box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.15); }
+
+        .actions { display: flex; justify-content: center; padding: 10px 0; }
+
+        button {
+            padding: 12px 32px;
+            font-size: 0.95rem;
+            font-weight: 600;
+            border-radius: var(--radius-md);
+            cursor: pointer;
+            transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+            display: flex; align-items: center; gap: 8px;
+        }
+
+        .btn-primary {
+            background-color: var(--accent-primary);
+            color: white; border: none;
+            box-shadow: 0 4px 14px 0 rgba(59, 130, 246, 0.39);
+        }
+
+        .btn-primary:hover { background-color: #2563eb; transform: translateY(-1px); }
+
+        .btn-secondary {
+            background-color: transparent;
+            color: var(--text-main);
+            border: 1px solid var(--border-subtle);
+            margin-top: 12px;
+            align-self: flex-end;
+        }
+
+        #outputArea { background-color: #111317; color: #9cdcfe; }
+
+        .status-msg {
+            font-size: 0.85rem; height: 20px; margin-top: 4px; text-align: center;
+        }
+        .success { color: var(--success); }
+        .error { color: #ef4444; }
+
+        .toast { animation: fadeInOut 2.5s forwards; }
+        @keyframes fadeInOut {
+            0% { opacity: 0; transform: translateY(5px); }
+            10% { opacity: 1; transform: translateY(0); }
+            90% { opacity: 1; transform: translateY(0); }
+            100% { opacity: 0; transform: translateY(-5px); }
+        }
+    </style>
+</head>
+<body>
+
+    <div class="container">
+        <header>
+            <h1>Profi Config Konverter (Multi-DN Support)</h1>
+            <p class="subtitle">Verarbeitet komplexe Bauteile mit individuellen Daten pro DN</p>
+        </header>
+
+        <div>
+            <label class="section-title">Input (Excel / TSV)</label>
+            <textarea id="inputArea" placeholder="Spalten: RK_ID | RK_Name | Alle_DN | BT_ID | BT_Name | Einzel_DN | RIB | Zeit | Einheit | Art | Bestellname"></textarea>
+        </div>
+
+        <div class="actions">
+            <button class="btn-primary" onclick="generateJSON()">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+                JSON Generieren
+            </button>
+        </div>
+
+        <div style="display: flex; flex-direction: column;">
+            <label class="section-title">Output (config.js Struktur)</label>
+            <textarea id="outputArea" readonly placeholder="Das Ergebnis erscheint hier..."></textarea>
+            <button class="btn-secondary" onclick="copyToClipboard()">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>
+                In Zwischenablage kopieren
+            </button>
+        </div>
+
+        <div id="status" class="status-msg"></div>
+    </div>
+
+    <script>
+        function generateJSON() {
+            const input = document.getElementById('inputArea').value.trim();
+            if (!input) return;
+
+            try {
+                const lines = input.split('\n').map(line => line.trim()).filter(line => line.length > 0);
+                const rohrklassenMap = new Map();
+                const sonderleistungen = [];
+
+                lines.forEach((line, index) => {
+                    const parts = line.split('\t');
+                    if (parts.length < 10) return; // Mindestens 10 Spalten nötig
+
+                    let [rkId, rkName, dimsRaw, bId, bez, einzelDn, rib, zeitRaw, einheit, art, bestellname] = parts;
+                    
+                    // Kopfzeile ignorieren
+                    if (index === 0 && (rkId.toLowerCase().includes('id') || rkId.toLowerCase().includes('rohrklasse'))) return;
+
+                    const zeit = parseFloat(zeitRaw.replace(',', '.')) || 0;
+
+                    // Sonderleistungen separat behandeln
+                    if (rkId.toLowerCase() === 'sonderleistung') {
+                        sonderleistungen.push({
+                            id: bId,
+                            bezeichnung: bez,
+                            typ: "leistung",
+                            rib_nummer: rib,
+                            zeit_in_minuten: zeit,
+                            einheit: einheit,
+                            eingabe_art: art
+                        });
+                        return;
+                    }
+
+                    // Rohrklasse initialisieren
+                    if (!rohrklassenMap.has(rkId)) {
+                        rohrklassenMap.set(rkId, {
+                            id: rkId,
+                            name: rkName,
+                            dimensionen: dimsRaw.split(',').map(d => d.trim()).filter(d => d.length > 0),
+                            bauteileMap: new Map() // Temporäre Map für Bauteile innerhalb der RK
+                        });
+                    }
+
+                    const rk = rohrklassenMap.get(rkId);
+                    
+                    // Bauteil initialisieren oder holen
+                    if (!rk.bauteileMap.has(bId)) {
+                        rk.bauteileMap.set(bId, {
+                            id: bId,
+                            bezeichnung: bez,
+                            typ: "material", // Standard
+                            einheit: einheit,
+                            eingabe_art: art,
+                            dimensionen_daten: {}
+                        });
+                    }
+
+                    const bt = rk.bauteileMap.get(bId);
+                    const zeit = parseFloat(zeitRaw.replace(',', '.')) || 0;
+
+                    // Wenn eine Einzel-DN angegeben ist, in dimensionen_daten speichern
+                    if (einzelDn && einzelDn.trim().length > 0) {
+                        bt.dimensionen_daten[einzelDn.trim()] = {
+                            rib: rib,
+                            zeit: zeit,
+                            bestellname: bestellname || undefined
+                        };
+                    } else {
+                        // Flache Struktur falls keine DN angegeben (z.B. Schweißnaht)
+                        bt.rib_nummer = rib;
+                        bt.zeit_in_minuten = zeit;
+                    }
+                });
+
+                // Map-Struktur in finales Array umwandeln
+                const result = {
+                    rohrklassen: Array.from(rohrklassenMap.values()).map(rk => ({
+                        id: rk.id,
+                        name: rk.name,
+                        dimensionen: rk.dimensionen,
+                        bauteile: Array.from(rk.bauteileMap.values())
+                    })),
+                    sonderleistungen: sonderleistungen
+                };
+
+                document.getElementById('outputArea').value = `const APP_CONFIG = ${JSON.stringify(result, null, 2)};`;
+                showStatus('JSON mit Multi-DN Support generiert!', 'success');
+
+            } catch (err) {
+                console.error(err);
+                showStatus('Fehler: ' + err.message, 'error');
+            }
+        }
+
+        function copyToClipboard() {
+            const output = document.getElementById('outputArea');
+            if (!output.value) return;
+            output.select();
+            document.execCommand('copy');
+            showStatus('In die Zwischenablage kopiert!', 'success');
+        }
+
+        function showStatus(msg, type) {
+            const status = document.getElementById('status');
+            status.innerText = msg;
+            status.className = 'status-msg ' + type + ' toast';
+            setTimeout(() => { status.classList.remove('toast'); }, 2500);
+        }
+    </script>
+</body>
+</html>

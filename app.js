@@ -247,7 +247,7 @@ class App {
         this.toggleModal('secondDnModal', false);
     }
 
-    exportJson() { const b = new Blob([JSON.stringify(this.projekt, null, 2)], { type: 'application/json' }); const a = document.createElement('a'); a.href = URL.createObjectURL(b); a.download = `projekt_${this.projekt.name}.json`; a.click(); }
+    exportJson() { const b = new Blob([JSON.stringify(this.projekt, null, 2)], { type: 'application/json' }); const a = document.createElement('a'); a.href = URL.createObjectURL(b); a.download = `projekt.json`; a.click(); }
     importJson(event) {
         const file = event.target.files[0]; if (!file) return; const reader = new FileReader();
         reader.onload = (e) => { try { const imp = JSON.parse(e.target.result); if (imp.name && Array.isArray(imp.sections)) { this.projekt = imp; this.projekt.activeSectionId = imp.sections.length > 0 ? imp.sections[0].id : null; this.saveState(); location.reload(); } } catch (err) { alert("Fehler!"); } };
@@ -271,9 +271,12 @@ class App {
             const label = p.bestellname || `${p.bezeichnung} (${p.dn})`;
             agg[label] = agg[label] || { l: label, m: 0, e: p.einheit }; agg[label].m += p.menge;
         }));
-        let t = `MATERIAL-LISTE: ${this.projekt.name}\n\n`;
+        let t = `LIEFERANTEN-LISTE / MATERIAL: ${this.projekt.name}\n\n`;
         Object.values(agg).forEach(i => t += `${i.m.toFixed(2)} ${i.e} ${i.l}\n`);
-        this.showExportModal("Materialliste", t);
+        
+        navigator.clipboard.writeText(t).then(() => {
+            this.showExportModal("Materialliste (In Zwischenablage kopiert)", t);
+        });
     }
 
     exportCalculationList() {
