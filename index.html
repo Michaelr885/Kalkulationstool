@@ -1,896 +1,1021 @@
 <!DOCTYPE html>
 <html lang="de">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-  <title>Mobiles Aufmaß- & Kalkulations-Tool</title>
-  <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
-  <script src="https://unpkg.com/lucide@latest"></script>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+  <title>Rohrleitungskalkulation</title>
   <style>
-:root {
-  --bg-base: #121212;
-  --bg-surface: #1e1e1e;
-  --bg-surface-hover: #2c2c2c;
-  --accent-primary: #3b82f6;
-  --text-main: #f4f4f5;
-  --text-muted: #a1a1aa;
-  --border-subtle: #333333;
-  --success: #10b981;
-  --danger: #ef4444;
-  --border-radius: 8px;
-  --spacing-md: 16px;
-}
+    :root {
+      --bg: #121212;
+      --surface: #1e1e1e;
+      --surface-elevated: #252525;
+      --primary: #2196f3;
+      --primary-dim: rgba(33, 150, 243, 0.18);
+      --secondary: #03dac6;
+      --secondary-dim: rgba(3, 218, 198, 0.14);
+      --on-surface: rgba(255, 255, 255, 0.92);
+      --on-surface-muted: rgba(255, 255, 255, 0.58);
+      --border: rgba(255, 255, 255, 0.1);
+      --danger: #cf6679;
+      --radius: 12px;
+      --touch: 48px;
+      --font: "Roboto", system-ui, -apple-system, "Segoe UI", sans-serif;
+    }
 
-* { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
-body { font-family: 'Inter', sans-serif; background-color: var(--bg-base); color: var(--text-main); height: 100vh; overflow: hidden; display: flex; flex-direction: column; }
+    * { box-sizing: border-box; }
 
-/* --- Header --- */
-header {
-  background-color: var(--bg-surface);
-  border-bottom: 1px solid var(--border-subtle);
-  padding: var(--spacing-md);
-  display: flex;
-  flex-direction: column;
-  gap: 10px;
-  height: auto;
-  z-index: 100;
-  flex-shrink: 0;
-}
+    html, body {
+      margin: 0;
+      min-height: 100%;
+      font-family: var(--font);
+      background: var(--bg);
+      color: var(--on-surface);
+      line-height: 1.45;
+      -webkit-tap-highlight-color: transparent;
+    }
 
-.header-top { display: flex; justify-content: space-between; align-items: center; gap: 10px; }
-.project-title { font-size: 1.1rem; font-weight: 600; cursor: pointer; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-.section-controls { display: flex; align-items: center; gap: 8px; flex-shrink: 0; }
+    button, input, select {
+      font: inherit;
+      color: inherit;
+    }
 
-#sectionSelect { 
-  background: var(--bg-base); color: white; border: 1px solid var(--border-subtle); 
-  padding: 8px; border-radius: 6px; font-size: 0.85rem; max-width: 120px;
-}
+    .app {
+      display: flex;
+      min-height: 100vh;
+      flex-direction: column;
+    }
 
-.header-bottom { display: flex; width: 100%; }
-#rohrklasseSelect, .rohrklasse-trigger {
-  width: 100%; background: var(--bg-base); color: white; border: 1px solid var(--border-subtle);
-  padding: 10px; border-radius: 6px; text-align: left; display: flex; justify-content: space-between; align-items: center;
-}
+    @media (min-width: 768px) {
+      .app { flex-direction: row; }
+    }
 
-/* --- Main Layout --- */
-.app-container { display: flex; flex-direction: column; height: 100%; }
+    .sidebar {
+      background: var(--surface);
+      border-bottom: 1px solid var(--border);
+      padding: 16px;
+      display: flex;
+      flex-direction: column;
+      gap: 14px;
+      flex-shrink: 0;
+    }
 
-main { flex: 1; overflow-y: auto; padding: var(--spacing-md); }
+    @media (min-width: 768px) {
+      .sidebar {
+        width: 300px;
+        min-height: 100vh;
+        border-bottom: none;
+        border-right: 1px solid var(--border);
+      }
+    }
 
-.empty-state {
-  display: flex; flex-direction: column; align-items: center; justify-content: center;
-  height: 100%; text-align: center; gap: 20px; color: var(--text-muted);
-}
+    .project-title {
+      font-size: 1.1rem;
+      font-weight: 600;
+      color: var(--secondary);
+      word-break: break-word;
+    }
 
-/* --- Components --- */
-.toolbar { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 16px; }
-.radio-group { display: flex; background: var(--bg-surface); padding: 4px; border-radius: 8px; border: 1px solid var(--border-subtle); }
-.radio-group label { padding: 6px 12px; border-radius: 4px; font-size: 0.8rem; cursor: pointer; }
-.radio-group input { display: none; }
-.radio-group input:checked + label { background: var(--border-subtle); color: white; }
+    .sidebar-label {
+      font-size: 0.72rem;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      color: var(--on-surface-muted);
+      margin-bottom: 8px;
+    }
 
-.dn-selector { margin-bottom: 16px; position: relative; z-index: 50; }
+    .section-list {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+      max-height: 36vh;
+      overflow-y: auto;
+    }
 
-.dn-dropdown-wrap { position: relative; width: 100%; }
+    @media (min-width: 768px) {
+      .section-list {
+        max-height: none;
+        flex: 1;
+        min-height: 100px;
+      }
+    }
 
-.dn-dropdown-trigger {
-  width: 100%;
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 10px;
-  min-height: 44px;
-  padding: 10px 14px;
-  background: var(--bg-surface);
-  border: 1px solid var(--border-subtle);
-  border-radius: var(--border-radius);
-  color: var(--text-main);
-  font-size: 0.95rem;
-  font-weight: 600;
-  cursor: pointer;
-  text-align: left;
-}
+    .section-item {
+      min-height: var(--touch);
+      padding: 0 14px;
+      border-radius: var(--radius);
+      border: 1px solid var(--border);
+      background: var(--surface-elevated);
+      display: flex;
+      align-items: center;
+      cursor: pointer;
+      text-align: left;
+      transition: border-color 0.15s, background 0.15s;
+    }
 
-.dn-dropdown-trigger:hover {
-  background: var(--bg-surface-hover);
-}
+    .section-item:hover { border-color: rgba(33, 150, 243, 0.45); }
 
-.dn-dropdown-trigger:focus {
-  outline: 2px solid var(--accent-primary);
-  outline-offset: 2px;
-}
+    .section-item.active {
+      border-color: var(--primary);
+      background: var(--primary-dim);
+    }
 
-.dn-dropdown-chevron {
-  width: 20px;
-  height: 20px;
-  flex-shrink: 0;
-  color: var(--text-muted);
-}
+    .toolbar {
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
 
-.dn-dropdown-panel {
-  display: none;
-  position: absolute;
-  left: 0;
-  right: 0;
-  top: calc(100% + 6px);
-  max-height: min(42vh, 280px);
-  overflow-y: auto;
-  overflow-x: hidden;
-  background: var(--bg-surface);
-  border: 1px solid var(--border-subtle);
-  border-radius: var(--border-radius);
-  box-shadow: 0 12px 36px rgba(0, 0, 0, 0.55);
-  z-index: 160;
-}
+    @media (min-width: 480px) {
+      .toolbar { flex-direction: row; flex-wrap: wrap; }
+    }
 
-.dn-dropdown-wrap.open .dn-dropdown-panel {
-  display: block;
-}
+    .btn {
+      min-height: var(--touch);
+      padding: 0 18px;
+      border-radius: var(--radius);
+      border: none;
+      cursor: pointer;
+      font-weight: 600;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      transition: opacity 0.15s, transform 0.08s;
+    }
 
-.dn-dropdown-option {
-  display: block;
-  width: 100%;
-  padding: 11px 14px;
-  border: none;
-  border-bottom: 1px solid var(--border-subtle);
-  background: transparent;
-  color: var(--text-main);
-  font: inherit;
-  font-size: 0.9rem;
-  text-align: left;
-  cursor: pointer;
-}
+    .btn:active { transform: scale(0.98); }
+    .btn:disabled { opacity: 0.45; cursor: not-allowed; }
 
-.dn-dropdown-option:last-child {
-  border-bottom: none;
-}
+    .btn-primary {
+      background: var(--primary);
+      color: #fff;
+    }
 
-.dn-dropdown-option:hover {
-  background: var(--bg-surface-hover);
-}
+    .btn-secondary {
+      background: var(--surface-elevated);
+      color: var(--on-surface);
+      border: 1px solid var(--border);
+    }
 
-.dn-dropdown-option.active {
-  background: rgba(59, 130, 246, 0.15);
-  color: var(--accent-primary);
-  font-weight: 600;
-}
+    .btn-accent {
+      background: var(--secondary-dim);
+      color: var(--secondary);
+      border: 1px solid rgba(3, 218, 198, 0.35);
+    }
 
-.dn-btn { flex: 0 0 auto; min-width: 55px; height: 40px; background: var(--bg-surface); border: 1px solid var(--border-subtle); border-radius: 6px; color: white; cursor: pointer; }
-.dn-btn.active { background: var(--accent-primary); border-color: var(--accent-primary); }
-.dn-btn.disabled { opacity: 0.2; cursor: not-allowed; filter: grayscale(1); }
+    .btn-danger {
+      background: rgba(207, 102, 121, 0.22);
+      color: var(--danger);
+      border: 1px solid rgba(207, 102, 121, 0.45);
+    }
 
-.action-board { display: grid; grid-template-columns: repeat(auto-fill, minmax(120px, 1fr)); gap: 12px; }
-.kachel { background: var(--bg-surface); border: 1px solid var(--border-subtle); border-radius: 8px; padding: 12px; text-align: center; cursor: pointer; min-height: 90px; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 6px; }
-.kachel i { color: var(--accent-primary); width: 24px; }
-.kachel-label { font-size: 0.8rem; font-weight: 500; }
+    .btn-block { width: 100%; }
 
-.input-wrapper { display: flex; gap: 4px; width: 100%; margin-top: 5px; }
-.input-wrapper input {
-  width: 100%;
-  background: var(--bg-base);
-  border: 1px solid var(--border-subtle);
-  color: white;
-  padding: 8px;
-  border-radius: 6px;
-  text-align: center;
-  appearance: textfield; /* Firefox */
-}
+    .hidden-file {
+      position: absolute;
+      width: 0;
+      height: 0;
+      opacity: 0;
+      pointer-events: none;
+    }
 
-/* Chrome, Safari, Edge, Opera: Remove Arrows */
-.input-wrapper input::-webkit-outer-spin-button,
-.input-wrapper input::-webkit-inner-spin-button {
-  -webkit-appearance: none;
-  margin: 0;
-}
-.add-btn { background: var(--accent-primary); border: none; color: white; padding: 0 10px; border-radius: 4px; cursor: pointer; }
+    .main {
+      flex: 1;
+      padding: 16px;
+      display: flex;
+      flex-direction: column;
+      gap: 18px;
+      overflow: auto;
+      min-width: 0;
+    }
 
-/* --- Aside / List --- */
-.live-list-container { background: var(--bg-surface); border-top: 1px solid var(--border-subtle); padding: var(--spacing-md); max-height: 40vh; display: flex; flex-direction: column; }
-.list-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; }
-.scroll-area { flex: 1; overflow-y: auto; }
-.list-table { width: 100%; border-collapse: collapse; }
-.list-table th { text-align: left; font-size: 0.65rem; color: var(--text-muted); text-transform: uppercase; padding: 8px; }
-.list-table td { padding: 8px; border-bottom: 1px solid var(--border-subtle); font-size: 0.8rem; }
+    .card {
+      background: var(--surface);
+      border-radius: var(--radius);
+      padding: 18px;
+      border: 1px solid var(--border);
+    }
 
-.total-bar { display: flex; justify-content: space-between; padding: 12px 0; border-top: 2px solid var(--border-subtle); color: var(--accent-primary); font-weight: 700; }
-.footer-actions { display: flex; gap: 8px; margin-top: 10px; }
-.footer-actions button { flex: 1; padding: 10px; border-radius: 6px; cursor: pointer; font-weight: 600; font-size: 0.85rem; }
+    .material-toggle {
+      display: flex;
+      gap: 12px;
+      flex-wrap: wrap;
+    }
 
-/* --- Modals & Overlays --- */
-.modal-overlay, .fullscreen-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.85); backdrop-filter: blur(4px); z-index: 1000; display: none; align-items: center; justify-content: center; }
-.modal-content { background: var(--bg-surface); padding: 24px; border-radius: 12px; width: 90%; max-width: 400px; border: 1px solid var(--border-subtle); }
-.modal-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; margin-top: 15px; }
-.modal-error { color: var(--danger); background: rgba(239, 68, 68, 0.1); padding: 8px; border-radius: 4px; font-size: 0.8rem; margin-top: 10px; border: 1px solid var(--danger); }
+    .material-btn {
+      flex: 1;
+      min-width: 140px;
+      min-height: 56px;
+      border-radius: var(--radius);
+      border: 2px solid var(--border);
+      background: var(--surface-elevated);
+      cursor: pointer;
+      font-weight: 600;
+      font-size: 1.05rem;
+      transition: border-color 0.15s, background 0.15s, color 0.15s;
+    }
 
-.fullscreen-overlay { flex-direction: column; justify-content: flex-start; }
-.overlay-content { width: 100%; height: 100%; padding: var(--spacing-md); display: flex; flex-direction: column; }
-.overlay-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; }
-.overlay-list { display: flex; flex-direction: column; gap: 10px; overflow-y: auto; }
-.overlay-item { background: var(--bg-surface); border: 1px solid var(--border-subtle); padding: 16px; border-radius: 8px; font-weight: 600; text-align: left; }
+    .material-btn.active-es {
+      border-color: var(--primary);
+      background: var(--primary-dim);
+      color: var(--primary);
+    }
 
-/* --- Responsiveness --- */
-@media (min-width: 1024px) {
-  .app-container { flex-direction: row; }
-  header { position: sticky; top: 0; border-bottom: 1px solid var(--border-subtle); }
-  main { padding-right: 400px; }
-  .live-list-container { position: fixed; top: 120px; right: 0; bottom: 0; width: 400px; max-height: none; border-top: none; border-left: 1px solid var(--border-subtle); border-radius: 0; }
-  .desktop-only { display: block; }
-  .mobile-only { display: none !important; }
-}
+    .material-btn.active-stahl {
+      border-color: var(--secondary);
+      background: var(--secondary-dim);
+      color: var(--secondary);
+    }
 
-@media (max-width: 1023px) {
-  .desktop-only { display: none !important; }
-  .mobile-only { display: flex; }
-}
+    .field-row {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
 
-.btn-icon { width: 36px; height: 36px; display: flex; align-items: center; justify-content: center; border-radius: 6px; border: 1px solid var(--border-subtle); background: var(--bg-surface); color: var(--text-muted); cursor: pointer; }
-.btn-icon:hover { color: white; background: var(--bg-surface-hover); }
-#deleteSectionBtn:hover { background: var(--danger); color: white; border-color: var(--danger); }
+    .field-row label {
+      font-size: 0.88rem;
+      color: var(--on-surface-muted);
+    }
 
-.btn-primary { background: var(--accent-primary); color: white; border: none; }
-.btn-secondary { background: var(--bg-surface-hover); color: white; border: 1px solid var(--border-subtle); }
+    .field-row input[type="text"] {
+      min-height: var(--touch);
+      padding: 0 14px;
+      border-radius: var(--radius);
+      border: 1px solid var(--border);
+      background: var(--bg);
+    }
+
+    .field-row input:focus {
+      outline: 2px solid var(--primary);
+      outline-offset: 2px;
+    }
+
+    .counter-grid {
+      display: grid;
+      grid-template-columns: 1fr;
+      gap: 12px;
+    }
+
+    @media (min-width: 520px) {
+      .counter-grid { grid-template-columns: repeat(2, 1fr); }
+    }
+
+    @media (min-width: 900px) {
+      .counter-grid { grid-template-columns: repeat(3, 1fr); }
+    }
+
+    .counter-btn {
+      min-height: 56px;
+      padding: 14px 16px;
+      border-radius: var(--radius);
+      border: 1px solid var(--border);
+      background: var(--surface-elevated);
+      cursor: pointer;
+      text-align: center;
+      font-weight: 600;
+      transition: border-color 0.15s, background 0.15s;
+    }
+
+    .counter-btn:hover { border-color: var(--primary); }
+
+    .counter-btn small {
+      display: block;
+      font-weight: 400;
+      font-size: 0.78rem;
+      color: var(--on-surface-muted);
+      margin-top: 4px;
+    }
+
+    .summary-bar {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 12px 20px;
+      padding: 14px;
+      background: var(--surface-elevated);
+      border-radius: var(--radius);
+      border: 1px solid var(--border);
+      font-size: 0.95rem;
+    }
+
+    .summary-bar strong { color: var(--primary); }
+
+    .list-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 12px;
+      flex-wrap: wrap;
+      gap: 8px;
+    }
+
+    .list-header h2 {
+      margin: 0;
+      font-size: 1.08rem;
+    }
+
+    .line-items {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+
+    .line-item {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      min-height: var(--touch);
+      padding: 10px 14px;
+      background: var(--surface-elevated);
+      border-radius: 10px;
+      border: 1px solid var(--border);
+    }
+
+    .line-item-meta {
+      font-size: 0.78rem;
+      color: var(--on-surface-muted);
+    }
+
+    .empty-hint {
+      color: var(--on-surface-muted);
+      padding: 24px;
+      text-align: center;
+    }
+
+    .modal-backdrop {
+      position: fixed;
+      inset: 0;
+      background: rgba(0, 0, 0, 0.72);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 20px;
+      z-index: 1000;
+    }
+
+    .modal {
+      background: var(--surface);
+      border-radius: 16px;
+      padding: 24px;
+      max-width: 400px;
+      width: 100%;
+      border: 1px solid var(--border);
+      box-shadow: 0 16px 48px rgba(0, 0, 0, 0.55);
+    }
+
+    .modal h1 {
+      margin: 0 0 8px;
+      font-size: 1.25rem;
+    }
+
+    .modal p {
+      margin: 0 0 16px;
+      color: var(--on-surface-muted);
+      font-size: 0.9rem;
+    }
+
+    .modal-actions {
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+      margin-top: 16px;
+    }
+
+    .toast {
+      position: fixed;
+      bottom: 24px;
+      left: 50%;
+      transform: translateX(-50%) translateY(100px);
+      background: var(--surface-elevated);
+      color: var(--on-surface);
+      padding: 14px 20px;
+      border-radius: var(--radius);
+      border: 1px solid var(--border);
+      box-shadow: 0 8px 24px rgba(0, 0, 0, 0.45);
+      z-index: 1100;
+      opacity: 0;
+      transition: transform 0.25s, opacity 0.25s;
+      max-width: min(90vw, 400px);
+      text-align: center;
+    }
+
+    .toast.show {
+      transform: translateX(-50%) translateY(0);
+      opacity: 1;
+    }
+
+    .toast.error {
+      border-color: var(--danger);
+      color: var(--danger);
+    }
+
+    h1.page-title {
+      margin: 0;
+      font-size: 1.32rem;
+    }
+
+    .sr-only {
+      position: absolute;
+      width: 1px;
+      height: 1px;
+      padding: 0;
+      margin: -1px;
+      overflow: hidden;
+      clip: rect(0, 0, 0, 0);
+      border: 0;
+    }
   </style>
 </head>
 <body>
-<body>
-  <div class="app-container">
-    <header>
-      <div class="header-top">
-        <h1 class="project-title" id="projectNameDisplay" onclick="app.renameProject()">Neues Projekt</h1>
-        <div class="section-controls">
-          <button class="btn-icon" title="Sektion hinzufügen" id="addSectionBtn">
-            <i data-lucide="plus"></i>
-          </button>
-          <select id="sectionSelect">
-            <option value="">Keine Sektion</option>
-          </select>
-          <button class="btn-icon" title="Sektion löschen" id="deleteSectionBtn">
-            <i data-lucide="trash-2"></i>
-          </button>
-        </div>
-      </div>
-      
-      <div class="header-bottom">
-        <select id="rohrklasseSelect" class="desktop-only">
-          <option value="">Rohrklasse wählen...</option>
-        </select>
-        <button id="mobileRohrklasseBtn" class="mobile-only rohrklasse-trigger">
-          <span id="activeRohrklasseName">Rohrklasse wählen...</span>
-          <i data-lucide="chevron-down"></i>
-        </button>
-      </div>
-    </header>
-
-    <main id="mainContent">
-      <div id="emptyState" class="empty-state">
-        <i data-lucide="folder-plus" size="48"></i>
-        <p>Bitte erstelle eine neue Sektion (z.B. Raum-Nr. oder Iso-Nr.), um mit dem Aufmaß zu beginnen.</p>
-        <button class="btn-primary" onclick="app.addSection()">Sektion hinzufügen</button>
-      </div>
-
-      <div id="appInterface" style="display: none;">
-        <!-- Zeitfaktoren -->
-        <section>
-          <div class="toolbar" id="zeitfaktorGroup"></div>
-        </section>
-
-        <!-- DN Auswahl -->
-        <section>
-          <div class="dn-selector" id="dnSelector"></div>
-        </section>
-
-        <!-- Sonderleistungen -->
-        <section>
-          <div class="toolbar" id="sonderleistungenToolbar"></div>
-        </section>
-
-        <!-- Aktions-Board -->
-        <div class="action-board" id="actionBoard"></div>
-      </div>
-    </main>
-
-    <aside class="live-list-container">
-      <div class="list-header">
-        <h3 id="currentSectionTitle" onclick="app.renameSection()" style="cursor: pointer;" title="Sektion umbenennen">Positionen</h3>
-        <button id="duplicateSectionBtn" class="btn-icon" title="Sektion duplizieren">
-          <i data-lucide="copy"></i>
-        </button>
-      </div>
-      
-      <div class="scroll-area">
-        <table class="list-table">
-          <thead>
-            <tr>
-              <th>Gegenstand</th>
-              <th>DN</th>
-              <th>Menge</th>
-              <th>Zeit</th>
-              <th></th>
-            </tr>
-          </thead>
-          <tbody id="positionTableBody"></tbody>
-        </table>
-      </div>
-
-      <div class="total-bar">
-        <span>Gesamt:</span>
-        <span id="totalTimeDisplay">0.0 min</span>
-      </div>
-      
-      <div class="footer-actions">
-        <button id="resetProjectBtn" style="background: var(--danger); color: white; border: none; flex: 0 0 auto; width: 44px;" title="Alles löschen"><i data-lucide="refresh-ccw"></i></button>
-        <button id="importJsonBtn" class="btn-secondary" title="Projekt laden">Laden</button>
-        <button id="exportJsonBtn" class="btn-secondary">Export</button>
-        <button id="exportMaterialBtn" class="btn-primary" style="background: var(--success);">Materialliste</button>
-        <button id="exportCalcBtn" class="btn-primary">Kalkulation</button>
-      </div>
-      <input type="file" id="importFileInput" style="display: none;" accept=".json">
-    </aside>
-  </div>
-
-  <!-- Modal für zweite DN -->
-  <div id="secondDnModal" class="modal-overlay">
-    <div id="secondDnModalContent" class="modal-content">
-      <h3 id="secondDnModalTitle">Ziel-DN wählen</h3>
-      <div id="modalError" class="modal-error"></div>
-      <div id="secondDnGrid" class="modal-grid"></div>
-      <button class="btn-secondary" style="width: 100%; margin-top: 20px;" onclick="app.toggleModal('secondDnModal', false)">Abbrechen</button>
-    </div>
-  </div>
-
-  <!-- Mobile Rohrklassen Overlay -->
-  <div id="rohrklasseOverlay" class="fullscreen-overlay">
-    <div class="overlay-content">
-      <div class="overlay-header">
-        <h2>Rohrklasse</h2>
-        <button class="btn-icon" onclick="app.toggleRohrklasseOverlay(false)"><i data-lucide="x"></i></button>
-      </div>
-      <div id="rohrklasseList" class="overlay-list"></div>
-    </div>
-  </div>
-
-  <!-- Export Vorschau Modal -->
-  <div id="exportModal" class="modal-overlay">
-    <div class="modal-content" style="max-width: 600px; width: 95%;">
-      <h3 id="exportModalTitle">Vorschau</h3>
-      <textarea id="exportTextarea" readonly style="width: 100%; height: 300px; margin-top: 15px; background: var(--bg-base); color: var(--text-main); border: 1px solid var(--border-subtle); padding: 10px; border-radius: 6px; font-family: monospace; font-size: 0.8rem; resize: none;"></textarea>
-      <div style="display: flex; gap: 10px; margin-top: 20px;">
-        <button class="btn-primary" style="flex: 1;" onclick="app.copyFromExportModal()">Kopieren</button>
-        <button class="btn-secondary" style="flex: 1;" onclick="app.toggleModal('exportModal', false)">Schließen</button>
-      </div>
-    </div>
-  </div>
+  <div id="app" class="app"></div>
+  <div id="toast" class="toast" role="status" aria-live="polite"></div>
 
   <script>
-const APP_CONFIG = {
-  "rohrklassen": [
-    {
-      "id": "edelstahl_v4a",
-      "name": "Edelstahl V4A",
-      "dimensionen": [
-        "DN 15",
-        "DN 20",
-        "DN 25"
-      ],
-      "bauteile": [
-        {
-          "id": "rohr",
-          "bezeichnung": "Rohrleitung",
-          "typ": "material",
-          "einheit": "m",
-          "eingabe_art": "eingabe",
-          "dimensionen_daten": {
-            "DN 15": {
-              "rib": "1.1.1.1",
-              "zeit": 10,
-              "bestellname": "Edelstahlrohr 18x1.0"
-            },
-            "DN 20": {
-              "rib": "1.1.1.2",
-              "zeit": 12,
-              "bestellname": "Edelstahlrohr 22x1.2"
-            },
-            "DN 25": {
-              "rib": "1.1.1.3",
-              "zeit": 14.5,
-              "bestellname": "Edelstahlrohr 28x1.2"
-            }
-          }
-        },
-        {
-          "id": "bogen_90",
-          "bezeichnung": "Bogen 90°",
-          "typ": "material",
-          "einheit": "Stk",
-          "eingabe_art": "klick",
-          "dimensionen_daten": {
-            "DN 15": {
-              "rib": "1.1.2.1",
-              "zeit": 8,
-              "bestellname": "Schweißbogen 90° DN15"
-            },
-            "DN 20": {
-              "rib": "1.1.2.2",
-              "zeit": 9.5,
-              "bestellname": "Schweißbogen 90° DN20"
-            }
-          }
-        },
-        {
-          "id": "t_stueck",
-          "bezeichnung": "T-Stück",
-          "typ": "material",
-          "einheit": "Stk",
-          "eingabe_art": "zweite_dn_auswahl",
-          "dimensionen_daten": {
-            "DN 15 / DN 15": {
-              "rib": "1.1.3.1",
-              "zeit": 35,
-              "bestellname": "V4A T-Stück egal DN 15"
-            },
-            "DN 20 / DN 15": {
-              "rib": "1.1.3.2",
-              "zeit": 32,
-              "bestellname": "V4A T-Stück red. 20/15"
-            }
-          },
-          "gueltige_kombinationen": {
-            "DN 15": [
-              "DN 15"
-            ],
-            "DN 20": [
-              "DN 15"
-            ]
-          }
-        },
-        {
-          "id": "reduzierung",
-          "bezeichnung": "Reduzierung",
-          "typ": "material",
-          "einheit": "Stk",
-          "eingabe_art": "zweite_dn_auswahl",
-          "dimensionen_daten": {
-            "DN 20 / DN 15": {
-              "rib": "1.1.5.1",
-              "zeit": 12,
-              "bestellname": "V4A Reduzierung 22x18"
-            }
-          },
-          "gueltige_kombinationen": {
-            "DN 20": [
-              "DN 15"
-            ]
-          }
-        },
-        {
-          "id": "schweissnaht",
-          "bezeichnung": "Schweißnaht",
-          "typ": "material",
-          "einheit": "Stk",
-          "eingabe_art": "klick",
-          "dimensionen_daten": {},
-          "rib_nummer": "01.01.2004",
-          "zeit_in_minuten": 25
-        }
-      ]
-    }
-  ],
-  "sonderleistungen": [
-    {
-      "id": "freigabe",
-      "bezeichnung": "Freigabe / Einweisung",
-      "typ": "leistung",
-      "rib_nummer": "S-01",
-      "zeit_in_minuten": 30,
-      "einheit": "Stk",
-      "eingabe_art": "klick"
-    },
-    {
-      "id": "Test",
-      "bezeichnung": "Testlauf",
-      "typ": "leistung",
-      "rib_nummer": "S-02",
-      "zeit_in_minuten": 40,
-      "einheit": "Stk",
-      "eingabe_art": "klick"
-    }
-  ],
-  "zeitfaktoren": [
-    {
-      "id": "standard",
-      "name": "Standard",
-      "faktor": 1
-    },
-    {
-      "id": "zwangslage",
-      "name": "Zwangslage",
-      "faktor": 1.5
-    }
-  ]
-};
-  </script>
-  <script>
-/**
- * Mobiles Aufmaß- & Kalkulations-Tool
- * Finale Logik inkl. Vorschau-Modals
- */
+(function () {
+  "use strict";
 
-/** Nennweiten DN 15 … DN 300 (übliche Normreihe, Anzeige wie in der Konfiguration: „DN 15“). */
-const STANDARD_DN_LABELS = [15, 20, 25, 32, 40, 50, 65, 80, 100, 125, 150, 200, 250, 300].map((n) => `DN ${n}`);
+  var STORAGE_KEY = "rohrkalkulation_v2";
 
-class App {
-    constructor() {
-        this.config = APP_CONFIG;
-        this.activeRohrklasse = null;
-        this.activeDn = null;
-        this.activeZeitfaktor = 1.0;
-        
-        this.projekt = this.loadState() || {
-            name: "Neues Projekt",
-            activeSectionId: null,
-            sections: []
+  function uid() {
+    return "id_" + Math.random().toString(36).slice(2, 11) + Date.now().toString(36);
+  }
+
+  function nowIso() {
+    return new Date().toISOString();
+  }
+
+  function defaultState() {
+    return {
+      version: 2,
+      projectName: "",
+      sections: [],
+      activeSectionId: null
+    };
+  }
+
+  function createSection(name) {
+    return {
+      id: uid(),
+      name: name.trim() || "Abschnitt",
+      material: "edelstahl",
+      dn: "",
+      lineItems: []
+    };
+  }
+
+  var state = defaultState();
+
+  var els = {
+    app: document.getElementById("app"),
+    toast: document.getElementById("toast")
+  };
+
+  var toastTimer = null;
+  function showToast(message, isError) {
+    els.toast.textContent = message;
+    els.toast.classList.toggle("error", !!isError);
+    els.toast.classList.add("show");
+    clearTimeout(toastTimer);
+    toastTimer = setTimeout(function () {
+      els.toast.classList.remove("show");
+    }, 3200);
+  }
+
+  function saveToStorage() {
+    try {
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
+    } catch (e) {
+      showToast("Speichern fehlgeschlagen: " + (e.message || "Unbekannt"), true);
+    }
+  }
+
+  function loadFromStorage() {
+    try {
+      var raw = localStorage.getItem(STORAGE_KEY);
+      if (!raw) return false;
+      var parsed = JSON.parse(raw);
+      if (!parsed || typeof parsed !== "object") return false;
+      if (typeof parsed.projectName !== "string") parsed.projectName = "";
+      if (!Array.isArray(parsed.sections)) parsed.sections = [];
+      parsed.sections = parsed.sections.map(function (s) {
+        if (!s || typeof s !== "object") return createSection("Abschnitt");
+        return {
+          id: typeof s.id === "string" ? s.id : uid(),
+          name: typeof s.name === "string" ? s.name : "Abschnitt",
+          material: s.material === "stahl" ? "stahl" : "edelstahl",
+          dn: typeof s.dn === "string" || typeof s.dn === "number" ? String(s.dn) : "",
+          lineItems: Array.isArray(s.lineItems)
+            ? s.lineItems.filter(function (li) {
+                return li && typeof li === "object" && typeof li.id === "string" && typeof li.type === "string";
+              }).map(function (li) {
+                return {
+                  id: li.id,
+                  type: li.type,
+                  label: typeof li.label === "string" ? li.label : "",
+                  value: typeof li.value === "number" && !isNaN(li.value) ? li.value : li.type === "rohr" ? 0.5 : 1,
+                  createdAt: typeof li.createdAt === "string" ? li.createdAt : nowIso()
+                };
+              })
+            : []
         };
+      });
+      if (typeof parsed.activeSectionId !== "string" || !parsed.sections.some(function (x) { return x.id === parsed.activeSectionId; })) {
+        parsed.activeSectionId = parsed.sections[0] ? parsed.sections[0].id : null;
+      }
+      state = {
+        version: 2,
+        projectName: parsed.projectName,
+        sections: parsed.sections,
+        activeSectionId: parsed.activeSectionId
+      };
+      return true;
+    } catch (e) {
+      showToast("Lokale Daten beschädigt — neu starten.", true);
+      return false;
+    }
+  }
 
-        this.init();
+  function getActiveSection() {
+    if (!state.activeSectionId) return null;
+    for (var i = 0; i < state.sections.length; i++) {
+      if (state.sections[i].id === state.activeSectionId) return state.sections[i];
+    }
+    return null;
+  }
+
+  function sumRohrMeters(section) {
+    var m = 0;
+    section.lineItems.forEach(function (li) {
+      if (li.type === "rohr") m += li.value;
+    });
+    return m;
+  }
+
+  function countType(section, type) {
+    var n = 0;
+    section.lineItems.forEach(function (li) {
+      if (li.type === type) n += li.value;
+    });
+    return n;
+  }
+
+  /** Pro angefangene 6 m Rohr: 1 Messpunkt (0,1–6,0 m → 1; 6,1–12,0 → 2 …). */
+  function autoMesspunkte(section) {
+    var rohr = sumRohrMeters(section);
+    if (rohr <= 0) return 0;
+    return Math.ceil(rohr / 6);
+  }
+
+  function materialLabel(m) {
+    return m === "stahl" ? "Stahl" : "Edelstahl";
+  }
+
+  function formatDeDecimal(num) {
+    var s = String(num);
+    if (s.indexOf("e") !== -1 || s.indexOf("E") !== -1) {
+      s = num.toFixed(4);
+    }
+    return s.replace(".", ",");
+  }
+
+  function downloadText(filename, text, mime) {
+    var blob = new Blob([text], { type: mime || "text/plain;charset=utf-8" });
+    var a = document.createElement("a");
+    a.href = URL.createObjectURL(blob);
+    a.download = filename;
+    a.rel = "noopener";
+    document.body.appendChild(a);
+    a.click();
+    setTimeout(function () {
+      URL.revokeObjectURL(a.href);
+      a.remove();
+    }, 0);
+  }
+
+  function exportProjectJson() {
+    var payload = JSON.stringify(state, null, 2);
+    var safe = (state.projectName || "projekt").replace(/[^\wäöüÄÖÜß\- ]+/g, "").trim().replace(/\s+/g, "_") || "projekt";
+    downloadText(safe + "_rohrkalkulation.json", payload, "application/json;charset=utf-8");
+    showToast("Projekt als JSON gespeichert.");
+  }
+
+  function importProjectJson(text) {
+    var parsed;
+    try {
+      parsed = JSON.parse(text);
+    } catch (e) {
+      showToast("Ungültige JSON-Datei.", true);
+      return;
+    }
+    if (!parsed || typeof parsed !== "object") {
+      showToast("Ungültiges Projektformat.", true);
+      return;
+    }
+    var prev = state;
+    try {
+      if (typeof parsed.projectName !== "string") throw new Error("projectName");
+      if (!Array.isArray(parsed.sections)) throw new Error("sections");
+      var newState = defaultState();
+      newState.projectName = parsed.projectName;
+      newState.sections = parsed.sections.map(function (s, idx) {
+        if (!s || typeof s !== "object") throw new Error("section " + idx);
+        return {
+          id: typeof s.id === "string" ? s.id : uid(),
+          name: typeof s.name === "string" ? s.name : "Abschnitt",
+          material: s.material === "stahl" ? "stahl" : "edelstahl",
+          dn: s.dn != null ? String(s.dn) : "",
+          lineItems: Array.isArray(s.lineItems)
+            ? s.lineItems.map(function (li, j) {
+                if (!li || typeof li !== "object") throw new Error("line " + j);
+                return {
+                  id: typeof li.id === "string" ? li.id : uid(),
+                  type: typeof li.type === "string" ? li.type : "unknown",
+                  label: typeof li.label === "string" ? li.label : "",
+                  value: typeof li.value === "number" && !isNaN(li.value) ? li.value : 1,
+                  createdAt: typeof li.createdAt === "string" ? li.createdAt : nowIso()
+                };
+              })
+            : []
+        };
+      });
+      newState.activeSectionId =
+        typeof parsed.activeSectionId === "string" &&
+        newState.sections.some(function (x) { return x.id === parsed.activeSectionId; })
+          ? parsed.activeSectionId
+          : newState.sections[0]
+            ? newState.sections[0].id
+            : null;
+      state = newState;
+      saveToStorage();
+      render();
+      showToast("Projekt geladen.");
+    } catch (err) {
+      state = prev;
+      showToast("Projektdatei unvollständig oder beschädigt.", true);
+    }
+  }
+
+  function buildCsvRows() {
+    var rows = [];
+    rows.push(["Abschnitt", "Material", "DN", "Bauteil", "Anzahl"]);
+    state.sections.forEach(function (sec) {
+      var mat = materialLabel(sec.material);
+      var dn = sec.dn || "";
+      var rohrM = sumRohrMeters(sec);
+      if (rohrM > 0) {
+        rows.push([sec.name, mat, dn, "Rohr (m)", formatDeDecimal(rohrM)]);
+      }
+      var bogen = countType(sec, "bogen");
+      if (bogen > 0) rows.push([sec.name, mat, dn, "Bogen", String(bogen)]);
+      var tStueck = countType(sec, "t_stueck");
+      if (tStueck > 0) rows.push([sec.name, mat, dn, "T-Stück", String(tStueck)]);
+      var schweiss = countType(sec, "schweissnaht");
+      if (schweiss > 0) rows.push([sec.name, mat, dn, "Schweißnaht", String(schweiss)]);
+      var messMan = countType(sec, "messpunkt");
+      if (messMan > 0) rows.push([sec.name, mat, dn, "Messpunkt (manuell)", String(messMan)]);
+      var messAuto = autoMesspunkte(sec);
+      if (messAuto > 0) {
+        rows.push([sec.name, mat, dn, "Messpunkt (automatisch)", String(messAuto)]);
+      }
+    });
+    return rows;
+  }
+
+  function csvEscape(cell) {
+    var s = String(cell);
+    if (/[",;\n\r]/.test(s)) {
+      return '"' + s.replace(/"/g, '""') + '"';
+    }
+    return s;
+  }
+
+  function exportCsv() {
+    var rows = buildCsvRows();
+    if (rows.length <= 1) {
+      showToast("Keine Daten zum Exportieren.", true);
+      return;
+    }
+    var lines = rows.map(function (r) {
+      return r.map(csvEscape).join(";");
+    });
+    var bom = "\uFEFF";
+    var csv = bom + lines.join("\r\n");
+    var safe = (state.projectName || "export").replace(/[^\wäöüÄÖÜß\- ]+/g, "").trim().replace(/\s+/g, "_") || "export";
+    downloadText(safe + "_rohrkalkulation.csv", csv, "text/csv;charset=utf-8");
+    showToast("CSV exportiert (Excel-kompatibel).");
+  }
+
+  function renderNameModal() {
+    var backdrop = document.createElement("div");
+    backdrop.className = "modal-backdrop";
+    backdrop.setAttribute("role", "dialog");
+    backdrop.setAttribute("aria-modal", "true");
+    backdrop.setAttribute("aria-labelledby", "modal-title");
+
+    backdrop.innerHTML =
+      '<div class="modal">' +
+      '<h1 id="modal-title">Willkommen</h1>' +
+      "<p>Bitte geben Sie einen Projektnamen ein, um fortzufahren.</p>" +
+      '<label class="field-row"><span class="sr-only">Projektname</span>' +
+      '<input type="text" id="projektname-input" maxlength="120" placeholder="Projektname" autocomplete="off" /></label>' +
+      '<div class="modal-actions">' +
+      '<button type="button" class="btn btn-primary btn-block" id="modal-start">Starten</button>' +
+      "</div></div>";
+
+    var input = backdrop.querySelector("#projektname-input");
+    var btn = backdrop.querySelector("#modal-start");
+
+    function submit() {
+      var name = (input.value || "").trim();
+      if (!name) {
+        input.focus();
+        showToast("Bitte Projektnamen eingeben.", true);
+        return;
+      }
+      state.projectName = name;
+      if (state.sections.length === 0) {
+        var sec = createSection("Abschnitt 1");
+        state.sections.push(sec);
+        state.activeSectionId = sec.id;
+      }
+      saveToStorage();
+      backdrop.remove();
+      render();
     }
 
-    init() {
-        this.bindEvents();
-        this.renderRohrklassen();
-        this.renderZeitfaktoren();
-        this.renderSonderleistungen();
-        document.getElementById('projectNameDisplay').innerText = this.projekt.name;
-        this.updateSectionSelect();
-        if (this.config.rohrklassen.length > 0) this.selectRohrklasse(this.config.rohrklassen[0].id);
-        this.checkState();
-        lucide.createIcons();
+    btn.addEventListener("click", submit);
+    input.addEventListener("keydown", function (e) {
+      if (e.key === "Enter") submit();
+    });
+
+    els.app.appendChild(backdrop);
+    setTimeout(function () { input.focus(); }, 50);
+  }
+
+  function needsNameModal() {
+    return !state.projectName || !String(state.projectName).trim();
+  }
+
+  function render() {
+    if (needsNameModal()) {
+      els.app.innerHTML = "";
+      renderNameModal();
+      return;
     }
 
-    bindEvents() {
-        document.getElementById('addSectionBtn').onclick = () => this.addSection();
-        document.getElementById('deleteSectionBtn').onclick = () => this.deleteSection();
-        document.getElementById('duplicateSectionBtn').onclick = () => this.duplicateSection();
-        document.getElementById('resetProjectBtn').onclick = () => this.resetProject();
-        document.getElementById('exportJsonBtn').onclick = () => this.exportJson();
-        document.getElementById('exportMaterialBtn').onclick = () => this.exportMaterialList();
-        document.getElementById('exportCalcBtn').onclick = () => this.exportCalculationList();
-        document.getElementById('mobileRohrklasseBtn').onclick = () => this.toggleRohrklasseOverlay(true);
+    var active = getActiveSection();
 
-        document.addEventListener('mousedown', (e) => {
-            const wrap = document.getElementById('dnDropdownWrap');
-            if (!wrap || !wrap.classList.contains('open')) return;
-            if (wrap.contains(e.target)) return;
-            this.closeDnDropdown();
-        });
-        document.addEventListener('keydown', (e) => {
-            if (e.key !== 'Escape') return;
-            const wrap = document.getElementById('dnDropdownWrap');
-            if (wrap && wrap.classList.contains('open')) {
-                e.preventDefault();
-                this.closeDnDropdown();
-                document.getElementById('dnDropdownBtn')?.focus();
-            }
-        });
+    var html =
+      '<aside class="sidebar">' +
+      '<div class="project-title" title="Projekt">' +
+      escapeHtml(state.projectName) +
+      "</div>" +
+      '<div><div class="sidebar-label">Abschnitte</div>' +
+      '<div class="section-list" id="section-list"></div></div>' +
+      '<button type="button" class="btn btn-primary btn-block" id="btn-new-section">Neuer Abschnitt</button>' +
+      '<div class="toolbar">' +
+      '<button type="button" class="btn btn-secondary btn-block" id="btn-save-json">Projekt speichern</button>' +
+      '<button type="button" class="btn btn-secondary btn-block" id="btn-load-json">Projekt laden</button>' +
+      '<input type="file" class="hidden-file" id="file-load-json" accept="application/json,.json" />' +
+      '<button type="button" class="btn btn-accent btn-block" id="btn-export-csv">Export CSV</button>' +
+      "</div></aside>" +
+      '<main class="main">' +
+      '<h1 class="page-title">Rohrleitungskalkulation</h1>';
 
-        const importBtn = document.getElementById('importJsonBtn');
-        const fileInput = document.getElementById('importFileInput');
-        importBtn.onclick = () => fileInput.click();
-        fileInput.onchange = (e) => this.importJson(e);
+    if (!active) {
+      html +=
+        '<div class="card"><p class="empty-hint">Kein Abschnitt ausgewählt. Legen Sie einen Abschnitt an.</p></div>';
+    } else {
+      var rohrSum = sumRohrMeters(active);
+      var autoM = autoMesspunkte(active);
+
+      html +=
+        '<div class="card">' +
+        '<div class="sidebar-label" style="margin-bottom:12px;text-transform:none;letter-spacing:normal">Material</div>' +
+        '<div class="material-toggle">' +
+        '<button type="button" class="material-btn ' +
+        (active.material === "edelstahl" ? "active-es" : "") +
+        '" data-material="edelstahl">Edelstahl</button>' +
+        '<button type="button" class="material-btn ' +
+        (active.material === "stahl" ? "active-stahl" : "") +
+        '" data-material="stahl">Stahl</button>' +
+        "</div></div>" +
+        '<div class="card field-row">' +
+        "<label for=\"dn-input\">DN (Nennweite für Export)</label>" +
+        '<input type="text" id="dn-input" value="' +
+        escapeAttr(active.dn) +
+        '" placeholder="z. B. DN 50" />' +
+        "</div>" +
+        '<div class="card">' +
+        '<div class="sidebar-label" style="margin-bottom:12px;text-transform:none;letter-spacing:normal">Zähler</div>' +
+        '<div class="counter-grid">' +
+        '<button type="button" class="counter-btn" data-action="rohr">Rohr +0,5 m<small>+0,5 m pro Klick</small></button>' +
+        '<button type="button" class="counter-btn" data-action="bogen">Bogen<small>+1 Stück</small></button>' +
+        '<button type="button" class="counter-btn" data-action="t_stueck">T-Stück<small>+1 Stück</small></button>' +
+        '<button type="button" class="counter-btn" data-action="schweissnaht">Schweißnaht<small>+1 Stück</small></button>' +
+        '<button type="button" class="counter-btn" data-action="messpunkt">Messpunkt (manuell)<small>+1 Stück</small></button>' +
+        "</div></div>" +
+        '<div class="summary-bar">' +
+        "<span>Rohr gesamt: <strong>" +
+        formatDeDecimal(rohrSum) +
+        " m</strong></span>" +
+        "<span>Automatische Messpunkte: <strong>" +
+        String(autoM) +
+        "</strong> <small style=\"color:var(--on-surface-muted)\">(je 6 m Rohr)</small></span>" +
+        "</div>" +
+        '<div class="card">' +
+        '<div class="list-header"><h2>Einträge in diesem Abschnitt</h2></div>' +
+        '<div class="line-items" id="line-items"></div>' +
+        "</div>";
     }
 
-    saveState() { localStorage.setItem('kalkulationsTool_Projekt', JSON.stringify(this.projekt)); }
-    loadState() { const data = localStorage.getItem('kalkulationsTool_Projekt'); return data ? JSON.parse(data) : null; }
+    html += "</main>";
+    els.app.innerHTML = html;
 
-    checkState() {
-        const emptyState = document.getElementById('emptyState');
-        const appInterface = document.getElementById('appInterface');
-        const sectionTitle = document.getElementById('currentSectionTitle');
-        if (this.projekt.sections.length === 0) {
-            emptyState.style.display = 'flex'; appInterface.style.display = 'none';
-            sectionTitle.innerText = "Keine Sektion"; this.projekt.activeSectionId = null;
-        } else {
-            emptyState.style.display = 'none'; appInterface.style.display = 'block';
-            const activeSec = this.projekt.sections.find(s => s.id === this.projekt.activeSectionId);
-            sectionTitle.innerText = activeSec ? activeSec.name : "Sektion wählen";
+    wireSidebar();
+    if (active) wireMain(active);
+  }
+
+  function escapeHtml(s) {
+    return String(s)
+      .replace(/&/g, "&amp;")
+      .replace(/</g, "&lt;")
+      .replace(/>/g, "&gt;")
+      .replace(/"/g, "&quot;");
+  }
+
+  function escapeAttr(s) {
+    return escapeHtml(s).replace(/'/g, "&#39;");
+  }
+
+  function wireSidebar() {
+    var list = document.getElementById("section-list");
+    if (!list) return;
+
+    state.sections.forEach(function (sec) {
+      var btn = document.createElement("button");
+      btn.type = "button";
+      btn.className = "section-item" + (sec.id === state.activeSectionId ? " active" : "");
+      btn.textContent = sec.name;
+      btn.addEventListener("click", function () {
+        state.activeSectionId = sec.id;
+        saveToStorage();
+        render();
+      });
+      list.appendChild(btn);
+    });
+
+    document.getElementById("btn-new-section").addEventListener("click", function () {
+      var name = window.prompt("Name des neuen Abschnitts:", "");
+      if (name === null) return;
+      var sec = createSection(name || "Neuer Abschnitt");
+      state.sections.push(sec);
+      state.activeSectionId = sec.id;
+      saveToStorage();
+      render();
+    });
+
+    document.getElementById("btn-save-json").addEventListener("click", exportProjectJson);
+
+    var fileInput = document.getElementById("file-load-json");
+    document.getElementById("btn-load-json").addEventListener("click", function () {
+      fileInput.click();
+    });
+    fileInput.addEventListener("change", function () {
+      var f = fileInput.files && fileInput.files[0];
+      fileInput.value = "";
+      if (!f) return;
+      var reader = new FileReader();
+      reader.onload = function () {
+        importProjectJson(String(reader.result || ""));
+      };
+      reader.onerror = function () {
+        showToast("Datei konnte nicht gelesen werden.", true);
+      };
+      reader.readAsText(f, "UTF-8");
+    });
+
+    document.getElementById("btn-export-csv").addEventListener("click", exportCsv);
+  }
+
+  function addLineItem(section, type, label, value) {
+    section.lineItems.push({
+      id: uid(),
+      type: type,
+      label: label,
+      value: value,
+      createdAt: nowIso()
+    });
+  }
+
+  function wireMain(active) {
+    document.querySelectorAll(".material-btn").forEach(function (btn) {
+      btn.addEventListener("click", function () {
+        var mat = btn.getAttribute("data-material");
+        active.material = mat === "stahl" ? "stahl" : "edelstahl";
+        saveToStorage();
+        render();
+      });
+    });
+
+    var dnInput = document.getElementById("dn-input");
+    dnInput.addEventListener("input", function () {
+      active.dn = dnInput.value;
+      saveToStorage();
+    });
+    dnInput.addEventListener("blur", function () {
+      saveToStorage();
+    });
+
+    var labels = {
+      rohr: "Rohr +0,5 m",
+      bogen: "Bogen",
+      t_stueck: "T-Stück",
+      schweissnaht: "Schweißnaht",
+      messpunkt: "Messpunkt (manuell)"
+    };
+
+    document.querySelectorAll(".counter-btn").forEach(function (btn) {
+      btn.addEventListener("click", function () {
+        var action = btn.getAttribute("data-action");
+        if (action === "rohr") {
+          addLineItem(active, "rohr", labels.rohr, 0.5);
+        } else if (action === "bogen") {
+          addLineItem(active, "bogen", labels.bogen, 1);
+        } else if (action === "t_stueck") {
+          addLineItem(active, "t_stueck", labels.t_stueck, 1);
+        } else if (action === "schweissnaht") {
+          addLineItem(active, "schweissnaht", labels.schweissnaht, 1);
+        } else if (action === "messpunkt") {
+          addLineItem(active, "messpunkt", labels.messpunkt, 1);
         }
-        this.renderProject();
+        saveToStorage();
+        render();
+      });
+    });
+
+    var container = document.getElementById("line-items");
+    if (!container) return;
+
+    if (active.lineItems.length === 0) {
+      container.innerHTML = '<p class="empty-hint">Noch keine Einträge. Nutzen Sie die Zähler oben.</p>';
+      return;
     }
 
-    renameProject() {
-        const name = prompt("Projekt-Name ändern:", this.projekt.name);
-        if (name && name.trim() !== "") {
-            this.projekt.name = name.trim();
-            document.getElementById('projectNameDisplay').innerText = this.projekt.name;
-            this.saveState();
-        }
-    }
-
-    renameSection() {
-        if (!this.projekt.activeSectionId) return;
-        const current = this.projekt.sections.find(s => s.id === this.projekt.activeSectionId);
-        const name = prompt("Sektion umbenennen:", current.name);
-        if (name && name.trim() !== "") { current.name = name.trim(); this.updateSectionSelect(); this.saveState(); this.checkState(); }
-    }
-
-    addSection() {
-        const name = prompt("Name der neuen Sektion:");
-        if (name && name.trim() !== "") {
-            const id = "sec_" + Date.now();
-            this.projekt.sections.push({ id: id, name: name.trim(), positionen: [] });
-            this.projekt.activeSectionId = id;
-            this.updateSectionSelect(); this.saveState(); this.checkState();
-        }
-    }
-
-    deleteSection() {
-        if (!this.projekt.activeSectionId) return;
-        const current = this.projekt.sections.find(s => s.id === this.projekt.activeSectionId);
-        if (confirm(`Sektion "${current.name}" wirklich löschen?`)) {
-            this.projekt.sections = this.projekt.sections.filter(s => s.id !== this.projekt.activeSectionId);
-            this.projekt.activeSectionId = this.projekt.sections.length > 0 ? this.projekt.sections[0].id : null;
-            this.updateSectionSelect(); this.saveState(); this.checkState();
-        }
-    }
-
-    duplicateSection() {
-        if (!this.projekt.activeSectionId) return;
-        const current = this.projekt.sections.find(s => s.id === this.projekt.activeSectionId);
-        const newId = "sec_copy_" + Date.now();
-        this.projekt.sections.push({ id: newId, name: `${current.name} (Kopie)`, positionen: JSON.parse(JSON.stringify(current.positionen)).map(p => ({ ...p, id: Date.now() + Math.random().toString() })) });
-        this.projekt.activeSectionId = newId;
-        this.updateSectionSelect(); this.saveState(); this.checkState();
-    }
-
-    resetProject() {
-        if (confirm("🚨 Projekt wirklich löschen?")) { localStorage.removeItem('kalkulationsTool_Projekt'); location.reload(); }
-    }
-
-    updateSectionSelect() {
-        const select = document.getElementById('sectionSelect');
-        if (this.projekt.sections.length === 0) { select.innerHTML = `<option value="">Keine Sektion</option>`; return; }
-        select.innerHTML = this.projekt.sections.map(s => `<option value="${s.id}" ${s.id === this.projekt.activeSectionId ? 'selected' : ''}>${s.name}</option>`).join('');
-        select.onchange = (e) => { this.projekt.activeSectionId = e.target.value; this.saveState(); this.checkState(); };
-    }
-
-    renderRohrklassen() {
-        const select = document.getElementById('rohrklasseSelect');
-        const list = document.getElementById('rohrklasseList');
-        select.innerHTML = this.config.rohrklassen.map(rk => `<option value="${rk.id}">${rk.name}</option>`).join('');
-        select.onchange = (e) => this.selectRohrklasse(e.target.value);
-        list.innerHTML = this.config.rohrklassen.map(rk => `<div class="overlay-item" onclick="app.selectRohrklasse('${rk.id}'); app.toggleRohrklasseOverlay(false);">${rk.name}</div>`).join('');
-    }
-
-    selectRohrklasse(id) {
-        this.activeRohrklasse = this.config.rohrklassen.find(rk => rk.id === id);
-        document.getElementById('rohrklasseSelect').value = id;
-        document.getElementById('activeRohrklasseName').innerText = this.activeRohrklasse.name;
-        if (!this.activeDn) {
-            this.activeDn = this.activeRohrklasse.dimensionen[0] || STANDARD_DN_LABELS[0];
-        }
-        this.renderDimensionen();
-        this.selectDn(this.activeDn);
-    }
-
-    toggleRohrklasseOverlay(show) { document.getElementById('rohrklasseOverlay').style.display = show ? 'flex' : 'none'; }
-
-    renderZeitfaktoren() {
-        const container = document.getElementById('zeitfaktorGroup');
-        container.innerHTML = this.config.zeitfaktoren.map(zf => `<div class="radio-group"><input type="radio" name="zeitfaktor" id="zf_${zf.id}" value="${zf.faktor}" ${zf.faktor === this.activeZeitfaktor ? 'checked' : ''}><label for="zf_${zf.id}">${zf.faktor}x ${zf.name.split(' ')[0]}</label></div>`).join('');
-        container.querySelectorAll('input').forEach(i => i.onchange = (e) => this.activeZeitfaktor = parseFloat(e.target.value));
-    }
-
-    renderSonderleistungen() {
-        const container = document.getElementById('sonderleistungenToolbar');
-        container.innerHTML = this.config.sonderleistungen.map(sl => `<button class="btn-icon" title="${sl.bezeichnung}" onclick="app.addSonderleistung('${sl.id}')"><i data-lucide="${this.getIconForService(sl.id)}"></i></button>`).join('');
-        lucide.createIcons();
-    }
-
-    renderDimensionen() {
-        const container = document.getElementById('dnSelector');
-        if (!this.activeRohrklasse) return;
-        container.innerHTML =
-            '<div class="dn-dropdown-wrap" id="dnDropdownWrap">' +
-            '<button type="button" class="dn-dropdown-trigger" id="dnDropdownBtn" aria-expanded="false" aria-haspopup="listbox" aria-controls="dnDropdownPanel">' +
-            '<span id="dnDropdownLabel"></span>' +
-            '<i data-lucide="chevron-down" class="dn-dropdown-chevron"></i>' +
-            '</button>' +
-            '<div class="dn-dropdown-panel" id="dnDropdownPanel" role="listbox" aria-label="Nennweite wählen"></div>' +
-            '</div>';
-
-        const panel = document.getElementById('dnDropdownPanel');
-        const label = document.getElementById('dnDropdownLabel');
-        label.textContent = this.activeDn || 'DN wählen';
-
-        STANDARD_DN_LABELS.forEach((dnLabel) => {
-            const opt = document.createElement('button');
-            opt.type = 'button';
-            opt.className = 'dn-dropdown-option' + (dnLabel === this.activeDn ? ' active' : '');
-            opt.setAttribute('role', 'option');
-            opt.textContent = dnLabel;
-            opt.addEventListener('click', () => {
-                this.selectDn(dnLabel);
-                this.closeDnDropdown();
-            });
-            panel.appendChild(opt);
+    active.lineItems
+      .slice()
+      .reverse()
+      .forEach(function (li) {
+        var row = document.createElement("div");
+        row.className = "line-item";
+        var valStr =
+          li.type === "rohr"
+            ? formatDeDecimal(li.value) + " m"
+            : "+" + String(li.value);
+        row.innerHTML =
+          "<div><div>" +
+          escapeHtml(li.label) +
+          '</div><div class="line-item-meta">' +
+          escapeHtml(new Date(li.createdAt).toLocaleString("de-DE")) +
+          " · " +
+          escapeHtml(valStr) +
+          "</div></div>" +
+          '<button type="button" class="btn btn-danger" style="min-height:44px;padding:0 14px" data-del="' +
+          escapeAttr(li.id) +
+          '">Löschen</button>';
+        row.querySelector("[data-del]").addEventListener("click", function () {
+          active.lineItems = active.lineItems.filter(function (x) {
+            return x.id !== li.id;
+          });
+          saveToStorage();
+          render();
         });
+        container.appendChild(row);
+      });
+  }
 
-        document.getElementById('dnDropdownBtn').addEventListener('click', (e) => {
-            e.stopPropagation();
-            this.toggleDnDropdown();
-        });
-
-        lucide.createIcons();
+  function init() {
+    loadFromStorage();
+    if (typeof state.projectName !== "string") state.projectName = "";
+    if (!String(state.projectName).trim()) {
+      state.projectName = "";
     }
-
-    toggleDnDropdown() {
-        const wrap = document.getElementById('dnDropdownWrap');
-        const btn = document.getElementById('dnDropdownBtn');
-        if (!wrap || !btn) return;
-        const open = !wrap.classList.contains('open');
-        wrap.classList.toggle('open', open);
-        btn.setAttribute('aria-expanded', open ? 'true' : 'false');
+    if (String(state.projectName).trim() && state.sections.length === 0) {
+      var sec = createSection("Abschnitt 1");
+      state.sections.push(sec);
+      state.activeSectionId = sec.id;
+      saveToStorage();
     }
-
-    closeDnDropdown() {
-        const wrap = document.getElementById('dnDropdownWrap');
-        const btn = document.getElementById('dnDropdownBtn');
-        if (wrap) wrap.classList.remove('open');
-        if (btn) btn.setAttribute('aria-expanded', 'false');
+    if (state.sections.length > 0 && !state.activeSectionId) {
+      state.activeSectionId = state.sections[0].id;
+      saveToStorage();
     }
+    render();
+  }
 
-    selectDn(dn) {
-        this.activeDn = dn;
-        const label = document.getElementById('dnDropdownLabel');
-        if (label) label.textContent = dn || 'DN wählen';
-        document.querySelectorAll('#dnDropdownPanel .dn-dropdown-option').forEach((opt) => {
-            opt.classList.toggle('active', opt.textContent === dn);
-        });
-        this.renderActionBoard();
-    }
-
-    renderActionBoard() {
-        const container = document.getElementById('actionBoard');
-        container.innerHTML = this.activeRohrklasse.bauteile.map(bt => {
-            if (bt.eingabe_art === 'klick' || bt.eingabe_art === 'zweite_dn_auswahl') return `<div class="kachel" onclick="app.handleAction('${bt.id}')"><i data-lucide="${this.getIconForBauteil(bt.id)}"></i><span class="kachel-label">${bt.bezeichnung}</span></div>`;
-            return `<div class="kachel eingabe-kachel"><span class="kachel-label">${bt.bezeichnung} (${bt.einheit})</span><div class="input-wrapper"><input type="number" id="input_${bt.id}" placeholder="0.0" step="0.1" onkeydown="if(event.key==='Enter') app.handleAddInput('${bt.id}')"><button class="add-btn" onclick="app.handleAddInput('${bt.id}')"><i data-lucide="plus"></i></button></div></div>`;
-        }).join('');
-        lucide.createIcons();
-    }
-
-    handleAction(btId) {
-        const bt = this.activeRohrklasse.bauteile.find(b => b.id === btId);
-        if (bt.erlaubte_dns && !bt.erlaubte_dns.includes(this.activeDn)) { alert(`Nicht verfügbar`); return; }
-        if (bt.eingabe_art === 'zweite_dn_auswahl') this.openSecondDnModal(bt); else this.addEntry(bt, 1);
-    }
-
-    handleAddInput(btId) {
-        const input = document.getElementById(`input_${btId}`);
-        const m = parseFloat(input.value); if (isNaN(m) || m <= 0) return;
-        const bt = this.activeRohrklasse.bauteile.find(b => b.id === btId);
-        this.addEntry(bt, m); input.value = '';
-    }
-
-    addSonderleistung(slId) { this.addEntry(this.config.sonderleistungen.find(s => s.id === slId), 1, "Global"); }
-
-    addEntry(bt, m, cDn = null) {
-        const sec = this.projekt.sections.find(s => s.id === this.projekt.activeSectionId); if (!sec) return;
-        const dn = cDn || this.activeDn;
-        let rib = bt.rib_nummer || "n.a."; let zeit = bt.zeit_in_minuten || 0; let bestellname = null;
-        if (bt.dimensionen_daten && bt.dimensionen_daten[dn]) {
-            rib = bt.dimensionen_daten[dn].rib || rib; zeit = bt.dimensionen_daten[dn].zeit || zeit;
-            bestellname = bt.dimensionen_daten[dn].bestellname || null;
-        }
-        const exist = sec.positionen.find(p => p.bauteilId === bt.id && p.dn === dn && p.faktor === this.activeZeitfaktor);
-        if (exist) exist.menge += m; 
-        else sec.positionen.push({ id: Date.now() + Math.random().toString(), bauteilId: bt.id, bezeichnung: bt.bezeichnung, typ: bt.typ, bestellname: bestellname, rib: rib, dn: dn, menge: m, einheit: bt.einheit, faktor: this.activeZeitfaktor, basisZeit: zeit });
-        this.saveState(); this.renderProject();
-    }
-
-    deleteEntry(id) {
-        const sec = this.projekt.sections.find(s => s.id === this.projekt.activeSectionId);
-        sec.positionen = sec.positionen.filter(p => p.id !== id); this.saveState(); this.renderProject();
-    }
-
-    updateQuantity(id, m) {
-        const sec = this.projekt.sections.find(s => s.id === this.projekt.activeSectionId);
-        const p = sec.positionen.find(x => x.id === id);
-        if (p) { p.menge = parseFloat(m) || 0; this.saveState(); this.renderProject(); }
-    }
-
-    renderProject() {
-        const tableBody = document.getElementById('positionTableBody');
-        const totalDisp = document.getElementById('totalTimeDisplay');
-        if (!this.projekt.activeSectionId) { tableBody.innerHTML = ''; totalDisp.innerText = "0.0 min"; return; }
-        const sec = this.projekt.sections.find(s => s.id === this.projekt.activeSectionId);
-        let total = 0;
-        tableBody.innerHTML = (sec.positionen || []).map(p => {
-            const z = (p.basisZeit * p.faktor) * p.menge; total += z;
-            return `<tr><td><div style="font-weight: 600;">${p.bezeichnung}</div><div style="font-size: 0.7rem; color: var(--text-muted);">RIB: ${p.rib} | F: ${p.faktor}x</div></td><td>${p.dn}</td><td><div style="display: flex; align-items: center; gap: 4px;"><input type="number" value="${p.menge}" step="0.1" style="width: 50px; background-color: var(--bg-base); border: 1px solid var(--border-subtle); color: var(--text-main); border-radius: 4px; padding: 4px; outline: none; font-size: 0.8rem;" onchange="app.updateQuantity('${p.id}', this.value)"><span style="font-size: 0.7rem;">${p.einheit}</span></div></td><td>${z.toFixed(1)}</td><td><button class="btn-icon" style="border:none; background:none; height:auto; width:auto; padding: 0;" onclick="app.deleteEntry('${p.id}')"><i data-lucide="trash-2" style="color: var(--danger); width: 14px;"></i></button></td></tr>`;
-        }).join('');
-        totalDisp.innerText = `${total.toFixed(1)} min`;
-        lucide.createIcons();
-    }
-
-    toggleModal(id, show) { document.getElementById(id).style.display = show ? 'flex' : 'none'; }
-    openSecondDnModal(bt) {
-        const grid = document.getElementById('secondDnGrid'); 
-        document.getElementById('modalError').style.display = 'none';
-        this.toggleModal('secondDnModal', true); 
-        document.getElementById('secondDnModalTitle').innerText = `${bt.bezeichnung} - Ziel-DN`;
-
-        const valid = bt.gueltige_kombinationen ? bt.gueltige_kombinationen[this.activeDn] : null;
-
-        grid.innerHTML = this.activeRohrklasse.dimensionen.map(dn => {
-            const isValid = valid && valid.includes(dn);
-            return `<button class="dn-btn ${!isValid ? 'disabled' : ''}" 
-                    ${!isValid ? 'disabled' : ''} 
-                    onclick="app.handleSecondDnSelect('${bt.id}', '${dn}')">${dn}</button>`;
-        }).join('');
-    }
-
-    handleSecondDnSelect(btId, targetDn) {
-        const bt = this.activeRohrklasse.bauteile.find(b => b.id === btId);
-        this.addEntry(bt, 1, `${this.activeDn} / ${targetDn}`); 
-        this.toggleModal('secondDnModal', false);
-    }
-
-    exportJson() { const b = new Blob([JSON.stringify(this.projekt, null, 2)], { type: 'application/json' }); const a = document.createElement('a'); a.href = URL.createObjectURL(b); a.download = `projekt.json`; a.click(); }
-    importJson(event) {
-        const file = event.target.files[0]; if (!file) return; const reader = new FileReader();
-        reader.onload = (e) => { try { const imp = JSON.parse(e.target.result); if (imp.name && Array.isArray(imp.sections)) { this.projekt = imp; this.projekt.activeSectionId = imp.sections.length > 0 ? imp.sections[0].id : null; this.saveState(); location.reload(); } } catch (err) { alert("Fehler!"); } };
-        reader.readAsText(file);
-    }
-
-    showExportModal(title, text) {
-        document.getElementById('exportModalTitle').innerText = title;
-        document.getElementById('exportTextarea').value = text;
-        this.toggleModal('exportModal', true);
-    }
-
-    copyFromExportModal() {
-        const text = document.getElementById('exportTextarea').value;
-        navigator.clipboard.writeText(text).then(() => alert("In Zwischenablage kopiert!"));
-    }
-
-    exportMaterialList() {
-        const agg = {};
-        this.projekt.sections.forEach(s => s.positionen.filter(p => p.typ === 'material').forEach(p => {
-            const label = p.bestellname || `${p.bezeichnung} (${p.dn})`;
-            agg[label] = agg[label] || { l: label, m: 0, e: p.einheit }; agg[label].m += p.menge;
-        }));
-        let t = `LIEFERANTEN-LISTE / MATERIAL: ${this.projekt.name}\n\n`;
-        Object.values(agg).forEach(i => t += `${i.m.toFixed(2)} ${i.e} ${i.l}\n`);
-        
-        navigator.clipboard.writeText(t).then(() => {
-            this.showExportModal("Materialliste (In Zwischenablage kopiert)", t);
-        });
-    }
-
-    exportCalculationList() {
-        let t = `KALKULATION: ${this.projekt.name}\n\n`;
-        let totalProjectMinutes = 0;
-        this.projekt.sections.forEach(s => {
-            t += `--- ${s.name} ---\n`;
-            let sectionMinutes = 0;
-            s.positionen.forEach(p => {
-                const z = (p.basisZeit * p.faktor) * p.menge;
-                sectionMinutes += z;
-                t += `${p.menge.toFixed(1)} ${p.einheit} | ${p.bezeichnung} (${p.dn}) | RIB: ${p.rib} | ${z.toFixed(1)} min\n`;
-            });
-            t += `Sektions-Summe: ${sectionMinutes.toFixed(1)} min\n\n`;
-            totalProjectMinutes += sectionMinutes;
-        });
-        t += `====================\nGESAMTZEIT: ${totalProjectMinutes.toFixed(1)} min (${(totalProjectMinutes/60).toFixed(2)} h)`;
-        this.showExportModal("Kalkulation", t);
-    }
-
-    getIconForBauteil(id) { const i = { 'bogen_90': 'corner-up-right', 't_stueck': 'split', 'schweissnaht': 'zap', 'reduzierung': 'minimize-2', 'flansch': 'circle-dashed', 'rohr': 'activity' }; return i[id] || 'plus-circle'; }
-    getIconForService(id) { const i = { 'freigabe': 'shield-check', 'gauge': 'gauge' }; return i[id] || 'star'; }
-}
-const app = new App();
-
+  init();
+})();
   </script>
 </body>
 </html>
