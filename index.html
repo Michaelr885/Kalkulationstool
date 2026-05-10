@@ -227,6 +227,48 @@
       color: var(--secondary);
     }
 
+    .einsatz-toggle {
+      display: flex;
+      gap: 12px;
+      flex-wrap: wrap;
+    }
+
+    .einsatz-btn {
+      flex: 1;
+      min-width: 140px;
+      min-height: 56px;
+      border-radius: var(--radius);
+      border: 2px solid var(--border);
+      background: var(--surface-elevated);
+      cursor: pointer;
+      font-weight: 600;
+      font-size: 1.05rem;
+      transition: border-color 0.15s, background 0.15s, color 0.15s;
+    }
+
+    .einsatz-btn.active-montage {
+      border-color: var(--primary);
+      background: var(--primary-dim);
+      color: var(--primary);
+    }
+
+    .einsatz-btn.active-demontage {
+      border-color: var(--secondary);
+      background: var(--secondary-dim);
+      color: var(--secondary);
+    }
+
+    .counter-block-title {
+      font-size: 0.88rem;
+      color: var(--on-surface-muted);
+      margin-bottom: 10px;
+      font-weight: 600;
+    }
+
+    .counter-block-title.spaced {
+      margin-top: 18px;
+    }
+
     .field-row {
       display: flex;
       flex-direction: column;
@@ -593,6 +635,7 @@
       name: name.trim() || "Abschnitt",
       material: "edelstahl",
       dn: STANDARD_DN_LABELS[0],
+      einsatz: "montage",
       lineItems: []
     };
   }
@@ -642,6 +685,7 @@
             var d = typeof s.dn === "string" || typeof s.dn === "number" ? String(s.dn) : "";
             return d.trim() ? d : STANDARD_DN_LABELS[0];
           })(),
+          einsatz: s.einsatz === "demontage" ? "demontage" : "montage",
           lineItems: Array.isArray(s.lineItems)
             ? s.lineItems.filter(function (li) {
                 return li && typeof li === "object" && typeof li.id === "string" && typeof li.type === "string";
@@ -650,7 +694,11 @@
                   id: li.id,
                   type: li.type,
                   label: typeof li.label === "string" ? li.label : "",
-                  value: typeof li.value === "number" && !isNaN(li.value) ? li.value : li.type === "rohr" ? 0.5 : 1,
+                  value: typeof li.value === "number" && !isNaN(li.value)
+                    ? li.value
+                    : li.type === "rohr" || li.type === "rohr_demontage"
+                      ? 0.5
+                      : 1,
                   createdAt: typeof li.createdAt === "string" ? li.createdAt : nowIso()
                 };
               })
@@ -700,14 +748,23 @@
     return n;
   }
 
+  function sumRohrMetersDemontage(section) {
+    var m = 0;
+    section.lineItems.forEach(function (li) {
+      if (li.type === "rohr_demontage") m += li.value;
+    });
+    return m;
+  }
+
   /**
-   * Automatische Messpunkte: je angefangene 6 m Rohr + je 1 pro Bogen + je 1 pro T-Stück.
+   * Automatische Messpunkte: je angefangene 6 m Rohr (Montage + Demontage) +
+   * je 1 pro Bogen (beides) + je 1 pro T-Stück (beides).
    */
   function autoMesspunkte(section) {
-    var rohr = sumRohrMeters(section);
-    var ausRohr = rohr > 0 ? Math.ceil(rohr / 6) : 0;
-    var bogen = countType(section, "bogen");
-    var tStueck = countType(section, "t_stueck");
+    var rohrGes = sumRohrMeters(section) + sumRohrMetersDemontage(section);
+    var ausRohr = rohrGes > 0 ? Math.ceil(rohrGes / 6) : 0;
+    var bogen = countType(section, "bogen") + countType(section, "bogen_demontage");
+    var tStueck = countType(section, "t_stueck") + countType(section, "t_stueck_demontage");
     return ausRohr + bogen + tStueck;
   }
 
@@ -772,6 +829,7 @@
             var d = s.dn != null ? String(s.dn) : "";
             return d.trim() ? d : STANDARD_DN_LABELS[0];
           })(),
+          einsatz: s.einsatz === "demontage" ? "demontage" : "montage",
           lineItems: Array.isArray(s.lineItems)
             ? s.lineItems.map(function (li, j) {
                 if (!li || typeof li !== "object") throw new Error("line " + j);
@@ -779,7 +837,12 @@
                   id: typeof li.id === "string" ? li.id : uid(),
                   type: typeof li.type === "string" ? li.type : "unknown",
                   label: typeof li.label === "string" ? li.label : "",
-                  value: typeof li.value === "number" && !isNaN(li.value) ? li.value : 1,
+                  value:
+                    typeof li.value === "number" && !isNaN(li.value)
+                      ? li.value
+                      : li.type === "rohr" || li.type === "rohr_demontage"
+                        ? 0.5
+                        : 1,
                   createdAt: typeof li.createdAt === "string" ? li.createdAt : nowIso()
                 };
               })
@@ -814,15 +877,25 @@
       var dn = sec.dn || "";
       var rohrM = sumRohrMeters(sec);
       if (rohrM > 0) {
-        rows.push([sec.name, mat, dn, "Rohr (m)", formatDeDecimal(rohrM)]);
+        rows.push([sec.name, mat, dn, "Rohr (m) Montage", formatDeDecimal(rohrM)]);
+      }
+      var rohrD = sumRohrMetersDemontage(sec);
+      if (rohrD > 0) {
+        rows.push([sec.name, mat, dn, "Rohr (m) Demontage", formatDeDecimal(rohrD)]);
       }
       var bogen = countType(sec, "bogen");
-      if (bogen > 0) rows.push([sec.name, mat, dn, "Bogen", String(bogen)]);
+      if (bogen > 0) rows.push([sec.name, mat, dn, "Bogen Montage", String(bogen)]);
+      var bogenD = countType(sec, "bogen_demontage");
+      if (bogenD > 0) rows.push([sec.name, mat, dn, "Bogen Demontage", String(bogenD)]);
       var tStueck = countType(sec, "t_stueck");
-      if (tStueck > 0) rows.push([sec.name, mat, dn, "T-Stück", String(tStueck)]);
+      if (tStueck > 0) rows.push([sec.name, mat, dn, "T-Stück Montage", String(tStueck)]);
+      var tStueckD = countType(sec, "t_stueck_demontage");
+      if (tStueckD > 0) rows.push([sec.name, mat, dn, "T-Stück Demontage", String(tStueckD)]);
       var schweiss = countType(sec, "schweissnaht");
-      if (schweiss > 0) rows.push([sec.name, mat, dn, "Schweißnaht", String(schweiss)]);
-      var messMan = countType(sec, "messpunkt");
+      if (schweiss > 0) rows.push([sec.name, mat, dn, "Schweißnaht Montage", String(schweiss)]);
+      var schweissD = countType(sec, "schweissnaht_demontage");
+      if (schweissD > 0) rows.push([sec.name, mat, dn, "Schweißnaht Demontage", String(schweissD)]);
+      var messMan = countType(sec, "messpunkt") + countType(sec, "messpunkt_demontage");
       var messAuto = autoMesspunkte(sec);
       var messGesamt = messMan + messAuto;
       if (messGesamt > 0) {
@@ -939,6 +1012,7 @@
         '<div class="card"><p class="empty-hint">Kein Abschnitt ausgewählt. Legen Sie einen Abschnitt an.</p></div>';
     } else {
       var rohrSum = sumRohrMeters(active);
+      var rohrSumDem = sumRohrMetersDemontage(active);
       var autoM = autoMesspunkte(active);
 
       html +=
@@ -953,6 +1027,16 @@
         '" data-material="stahl">Stahl</button>' +
         "</div></div>" +
         '<div class="card">' +
+        '<div class="sidebar-label" style="margin-bottom:12px;text-transform:none;letter-spacing:normal">Arbeit</div>' +
+        '<div class="einsatz-toggle">' +
+        '<button type="button" class="einsatz-btn ' +
+        (active.einsatz !== "demontage" ? "active-montage" : "") +
+        '" data-einsatz="montage">Montage</button>' +
+        '<button type="button" class="einsatz-btn ' +
+        (active.einsatz === "demontage" ? "active-demontage" : "") +
+        '" data-einsatz="demontage">Demontage</button>' +
+        "</div></div>" +
+        '<div class="card">' +
         '<div class="sidebar-label" style="margin-bottom:10px;text-transform:none;letter-spacing:normal">Nennweite (DN)</div>' +
         '<div class="dn-dropdown" id="dnDropdownWrap">' +
         '<button type="button" class="dn-dropdown-trigger" id="dnDropdownBtn" aria-expanded="false" aria-haspopup="listbox" aria-controls="dnDropdownPanel">' +
@@ -963,20 +1047,39 @@
         "</div></div>" +
         '<div class="card">' +
         '<div class="sidebar-label" style="margin-bottom:12px;text-transform:none;letter-spacing:normal">Zähler</div>' +
-        '<div class="counter-grid">' +
+        '<div class="counter-block-title">Montage</div>' +
+        '<div class="counter-grid" id="counter-montage">' +
         '<button type="button" class="counter-btn" data-action="rohr">Rohr +0,5 m<small>ein Eintrag, Meter summieren</small></button>' +
         '<button type="button" class="counter-btn" data-action="bogen">Bogen<small>ein Eintrag, Stückzahl addieren</small></button>' +
         '<button type="button" class="counter-btn" data-action="t_stueck">T-Stück<small>ein Eintrag, Stückzahl addieren</small></button>' +
         '<button type="button" class="counter-btn" data-action="schweissnaht">Schweißnaht<small>ein Eintrag, Stückzahl addieren</small></button>' +
         '<button type="button" class="counter-btn" data-action="messpunkt">Messpunkt (manuell)<small>ein Eintrag, Stückzahl addieren</small></button>' +
-        "</div></div>" +
+        "</div>";
+
+      if (active.einsatz === "demontage") {
+        html +=
+          '<div class="counter-block-title spaced">Demontage</div>' +
+          '<div class="counter-grid" id="counter-demontage">' +
+          '<button type="button" class="counter-btn" data-action="rohr_demontage">Rohr +0,5 m<small>Demontage · ein Eintrag</small></button>' +
+          '<button type="button" class="counter-btn" data-action="bogen_demontage">Bogen<small>Demontage · ein Eintrag</small></button>' +
+          '<button type="button" class="counter-btn" data-action="t_stueck_demontage">T-Stück<small>Demontage · ein Eintrag</small></button>' +
+          '<button type="button" class="counter-btn" data-action="schweissnaht_demontage">Schweißnaht<small>Demontage · ein Eintrag</small></button>' +
+          '<button type="button" class="counter-btn" data-action="messpunkt_demontage">Messpunkt (manuell)<small>Demontage · ein Eintrag</small></button>' +
+          "</div>";
+      }
+
+      html +=
+        "</div>" +
         '<div class="summary-bar">' +
-        "<span>Rohr gesamt: <strong>" +
+        "<span>Rohr Montage: <strong>" +
         formatDeDecimal(rohrSum) +
+        " m</strong></span>" +
+        "<span>Rohr Demontage: <strong>" +
+        formatDeDecimal(rohrSumDem) +
         " m</strong></span>" +
         "<span>Automatische Messpunkte: <strong>" +
         String(autoM) +
-        "</strong> <small style=\"color:var(--on-surface-muted)\">(6 m Rohr, je Bogen, je T-Stück)</small></span>" +
+        "</strong> <small style=\"color:var(--on-surface-muted)\">(6 m Rohr gesamt, je Bogen/T-Stück Montage + Demontage)</small></span>" +
         "</div>" +
         '<div class="card">' +
         '<div class="list-header"><h2>Einträge in diesem Abschnitt</h2></div>' +
@@ -1100,7 +1203,7 @@
     if (!li) return;
     var v = parseFloat(String(rawStr).replace(",", "."));
     if (isNaN(v)) return;
-    if (li.type === "rohr") {
+    if (li.type === "rohr" || li.type === "rohr_demontage") {
       if (v <= 0) {
         section.lineItems = section.lineItems.filter(function (x) {
           return x.id !== lineId;
@@ -1124,7 +1227,18 @@
 
   /** Altbestand: mehrere Zeilen gleichen Typs zu einer Zeile summieren. */
   function mergeDuplicateLinesByType(section) {
-    var types = ["rohr", "bogen", "t_stueck", "schweissnaht", "messpunkt"];
+    var types = [
+      "rohr",
+      "bogen",
+      "t_stueck",
+      "schweissnaht",
+      "messpunkt",
+      "rohr_demontage",
+      "bogen_demontage",
+      "t_stueck_demontage",
+      "schweissnaht_demontage",
+      "messpunkt_demontage"
+    ];
     for (var t = 0; t < types.length; t++) {
       var typ = types[t];
       var parts = [];
@@ -1204,6 +1318,15 @@
       });
     });
 
+    document.querySelectorAll(".einsatz-btn").forEach(function (btn) {
+      btn.addEventListener("click", function () {
+        var e = btn.getAttribute("data-einsatz");
+        active.einsatz = e === "demontage" ? "demontage" : "montage";
+        saveToStorage();
+        render();
+      });
+    });
+
     wireDnDropdown(active);
 
     var labels = {
@@ -1221,11 +1344,11 @@
       return kurz + dnPart + " · " + mat;
     }
 
-    function labelMesspunktOhneDn() {
-      return labels.messpunkt + " · " + materialLabel(active.material);
+    function labelMesspunktManuell(isDemontage) {
+      return labels.messpunkt + (isDemontage ? " Demontage" : "") + " · " + materialLabel(active.material);
     }
 
-    document.querySelectorAll(".counter-btn").forEach(function (btn) {
+    document.querySelectorAll("#counter-montage .counter-btn, #counter-demontage .counter-btn").forEach(function (btn) {
       btn.addEventListener("click", function () {
         var action = btn.getAttribute("data-action");
         if (!(active.dn || "").trim()) {
@@ -1241,7 +1364,17 @@
         } else if (action === "schweissnaht") {
           addOrMergeLine(active, "schweissnaht", labelMitDnUndMaterial(labels.schweissnaht), 1);
         } else if (action === "messpunkt") {
-          addOrMergeLine(active, "messpunkt", labelMesspunktOhneDn(), 1);
+          addOrMergeLine(active, "messpunkt", labelMesspunktManuell(false), 1);
+        } else if (action === "rohr_demontage") {
+          addOrMergeLine(active, "rohr_demontage", labelMitDnUndMaterial("Rohr (m) · Demontage"), 0.5);
+        } else if (action === "bogen_demontage") {
+          addOrMergeLine(active, "bogen_demontage", labelMitDnUndMaterial(labels.bogen + " · Demontage"), 1);
+        } else if (action === "t_stueck_demontage") {
+          addOrMergeLine(active, "t_stueck_demontage", labelMitDnUndMaterial(labels.t_stueck + " · Demontage"), 1);
+        } else if (action === "schweissnaht_demontage") {
+          addOrMergeLine(active, "schweissnaht_demontage", labelMitDnUndMaterial(labels.schweissnaht + " · Demontage"), 1);
+        } else if (action === "messpunkt_demontage") {
+          addOrMergeLine(active, "messpunkt_demontage", labelMesspunktManuell(true), 1);
         }
         saveToStorage();
         render();
@@ -1262,7 +1395,7 @@
       .forEach(function (li) {
         var row = document.createElement("div");
         row.className = "line-item";
-        var isRohr = li.type === "rohr";
+        var isRohr = li.type === "rohr" || li.type === "rohr_demontage";
         var unit = isRohr ? "m" : "Stk";
 
         var main = document.createElement("div");
