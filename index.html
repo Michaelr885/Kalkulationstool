@@ -883,6 +883,7 @@
       '<button type="button" class="btn btn-secondary btn-block" id="btn-load-json">Projekt laden</button>' +
       '<input type="file" class="hidden-file" id="file-load-json" accept="application/json,.json" />' +
       '<button type="button" class="btn btn-accent btn-block" id="btn-export-csv">Export CSV</button>' +
+      '<button type="button" class="btn btn-danger btn-block" id="btn-reset-alles">Alles löschen &amp; neu starten</button>' +
       "</div></aside>" +
       '<main class="main">' +
       '<h1 class="page-title">Rohrleitungskalkulation</h1>';
@@ -1004,6 +1005,20 @@
     });
 
     document.getElementById("btn-export-csv").addEventListener("click", exportCsv);
+
+    document.getElementById("btn-reset-alles").addEventListener("click", function () {
+      if (
+        !confirm(
+          "Wirklich ALLES löschen?\n\nAlle Abschnitte, alle Einträge und die lokale Speicherung werden unwiderruflich entfernt. Danach starten Sie mit einem neuen Projektnamen."
+        )
+      ) {
+        return;
+      }
+      try {
+        localStorage.removeItem(STORAGE_KEY);
+      } catch (e) {}
+      location.reload();
+    });
   }
 
   function addLineItem(section, type, label, value) {
