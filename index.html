@@ -119,6 +119,37 @@
       background: var(--primary-dim);
     }
 
+    .section-row {
+      display: flex;
+      gap: 8px;
+      align-items: stretch;
+    }
+
+    .section-row .section-item {
+      flex: 1;
+      min-width: 0;
+    }
+
+    .btn-section-rename {
+      flex: 0 0 var(--touch);
+      width: var(--touch);
+      min-height: var(--touch);
+      padding: 0;
+      border-radius: var(--radius);
+      border: 1px solid var(--border);
+      background: var(--surface-elevated);
+      color: var(--on-surface-muted);
+      cursor: pointer;
+      font-size: 0.95rem;
+      font-weight: 600;
+      transition: border-color 0.15s, background 0.15s, color 0.15s;
+    }
+
+    .btn-section-rename:hover {
+      border-color: var(--primary);
+      color: var(--primary);
+    }
+
     .toolbar {
       display: flex;
       flex-direction: column;
@@ -1134,16 +1165,43 @@
     if (!list) return;
 
     state.sections.forEach(function (sec) {
+      var row = document.createElement("div");
+      row.className = "section-row";
+
       var btn = document.createElement("button");
       btn.type = "button";
       btn.className = "section-item" + (sec.id === state.activeSectionId ? " active" : "");
       btn.textContent = sec.name;
+      btn.setAttribute("title", "Abschnitt auswählen");
       btn.addEventListener("click", function () {
         state.activeSectionId = sec.id;
         saveToStorage();
         render();
       });
-      list.appendChild(btn);
+
+      var ren = document.createElement("button");
+      ren.type = "button";
+      ren.className = "btn-section-rename";
+      ren.setAttribute("aria-label", "Abschnitt umbenennen");
+      ren.setAttribute("title", "Namen ändern");
+      ren.textContent = "✎";
+      ren.addEventListener("click", function (e) {
+        e.stopPropagation();
+        var n = window.prompt("Neuer Name für den Abschnitt:", sec.name);
+        if (n === null) return;
+        var trimmed = (n || "").trim();
+        if (!trimmed) {
+          showToast("Name darf nicht leer sein.", true);
+          return;
+        }
+        sec.name = trimmed;
+        saveToStorage();
+        render();
+      });
+
+      row.appendChild(btn);
+      row.appendChild(ren);
+      list.appendChild(row);
     });
 
     document.getElementById("btn-new-section").addEventListener("click", function () {
