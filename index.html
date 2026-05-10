@@ -874,35 +874,35 @@
 
   function buildCsvRows() {
     var rows = [];
-    rows.push(["Abschnitt", "Material", "DN", "Bauteil", "Anzahl"]);
+    rows.push(["Abschnitt", "Material", "DN", "Einsatz", "Bauteil", "Anzahl"]);
     state.sections.forEach(function (sec) {
       var mat = materialLabel(sec.material);
       var dn = sec.dn || "";
       var rohrM = sumRohrMeters(sec);
       if (rohrM > 0) {
-        rows.push([sec.name, mat, dn, "Rohr (m) Montage", formatDeDecimal(rohrM)]);
+        rows.push([sec.name, mat, dn, "Montage", "Rohr (m) Montage", formatDeDecimal(rohrM)]);
       }
       var rohrD = sumRohrMetersDemontage(sec);
       if (rohrD > 0) {
-        rows.push([sec.name, mat, dn, "Rohr (m) Demontage", formatDeDecimal(rohrD)]);
+        rows.push([sec.name, mat, dn, "Demontage", "Rohr (m) Demontage", formatDeDecimal(rohrD)]);
       }
       var bogen = countType(sec, "bogen");
-      if (bogen > 0) rows.push([sec.name, mat, dn, "Bogen Montage", String(bogen)]);
+      if (bogen > 0) rows.push([sec.name, mat, dn, "Montage", "Bogen Montage", String(bogen)]);
       var bogenD = countType(sec, "bogen_demontage");
-      if (bogenD > 0) rows.push([sec.name, mat, dn, "Bogen Demontage", String(bogenD)]);
+      if (bogenD > 0) rows.push([sec.name, mat, dn, "Demontage", "Bogen Demontage", String(bogenD)]);
       var tStueck = countType(sec, "t_stueck");
-      if (tStueck > 0) rows.push([sec.name, mat, dn, "T-Stück Montage", String(tStueck)]);
+      if (tStueck > 0) rows.push([sec.name, mat, dn, "Montage", "T-Stück Montage", String(tStueck)]);
       var tStueckD = countType(sec, "t_stueck_demontage");
-      if (tStueckD > 0) rows.push([sec.name, mat, dn, "T-Stück Demontage", String(tStueckD)]);
+      if (tStueckD > 0) rows.push([sec.name, mat, dn, "Demontage", "T-Stück Demontage", String(tStueckD)]);
       var schweiss = countType(sec, "schweissnaht");
-      if (schweiss > 0) rows.push([sec.name, mat, dn, "Schweißnaht Montage", String(schweiss)]);
+      if (schweiss > 0) rows.push([sec.name, mat, dn, "Montage", "Schweißnaht Montage", String(schweiss)]);
       var schweissD = countType(sec, "schweissnaht_demontage");
-      if (schweissD > 0) rows.push([sec.name, mat, dn, "Schweißnaht Demontage", String(schweissD)]);
+      if (schweissD > 0) rows.push([sec.name, mat, dn, "Demontage", "Schweißnaht Demontage", String(schweissD)]);
       var messMan = countType(sec, "messpunkt");
       var messAuto = autoMesspunkte(sec);
       var messGesamt = messMan + messAuto;
       if (messGesamt > 0) {
-        rows.push([sec.name, mat, dn, "Messpunkt", String(messGesamt)]);
+        rows.push([sec.name, mat, dn, "Montage", "Messpunkt", String(messGesamt)]);
       }
     });
     return rows;
