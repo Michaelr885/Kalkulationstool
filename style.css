@@ -60,7 +60,92 @@ main { flex: 1; overflow-y: auto; padding: var(--spacing-md); }
 .radio-group input { display: none; }
 .radio-group input:checked + label { background: var(--border-subtle); color: white; }
 
-.dn-selector { display: flex; overflow-x: auto; gap: 8px; padding-bottom: 8px; scrollbar-width: none; margin-bottom: 16px; }
+.dn-selector { margin-bottom: 16px; position: relative; z-index: 50; }
+
+.dn-dropdown-wrap { position: relative; width: 100%; }
+
+.dn-dropdown-trigger {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  min-height: 44px;
+  padding: 10px 14px;
+  background: var(--bg-surface);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--border-radius);
+  color: var(--text-main);
+  font-size: 0.95rem;
+  font-weight: 600;
+  cursor: pointer;
+  text-align: left;
+}
+
+.dn-dropdown-trigger:hover {
+  background: var(--bg-surface-hover);
+}
+
+.dn-dropdown-trigger:focus {
+  outline: 2px solid var(--accent-primary);
+  outline-offset: 2px;
+}
+
+.dn-dropdown-chevron {
+  width: 20px;
+  height: 20px;
+  flex-shrink: 0;
+  color: var(--text-muted);
+}
+
+.dn-dropdown-panel {
+  display: none;
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: calc(100% + 6px);
+  max-height: min(42vh, 280px);
+  overflow-y: auto;
+  overflow-x: hidden;
+  background: var(--bg-surface);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--border-radius);
+  box-shadow: 0 12px 36px rgba(0, 0, 0, 0.55);
+  z-index: 160;
+}
+
+.dn-dropdown-wrap.open .dn-dropdown-panel {
+  display: block;
+}
+
+.dn-dropdown-option {
+  display: block;
+  width: 100%;
+  padding: 11px 14px;
+  border: none;
+  border-bottom: 1px solid var(--border-subtle);
+  background: transparent;
+  color: var(--text-main);
+  font: inherit;
+  font-size: 0.9rem;
+  text-align: left;
+  cursor: pointer;
+}
+
+.dn-dropdown-option:last-child {
+  border-bottom: none;
+}
+
+.dn-dropdown-option:hover {
+  background: var(--bg-surface-hover);
+}
+
+.dn-dropdown-option.active {
+  background: rgba(59, 130, 246, 0.15);
+  color: var(--accent-primary);
+  font-weight: 600;
+}
+
 .dn-btn { flex: 0 0 auto; min-width: 55px; height: 40px; background: var(--bg-surface); border: 1px solid var(--border-subtle); border-radius: 6px; color: white; cursor: pointer; }
 .dn-btn.active { background: var(--accent-primary); border-color: var(--accent-primary); }
 .dn-btn.disabled { opacity: 0.2; cursor: not-allowed; filter: grayscale(1); }

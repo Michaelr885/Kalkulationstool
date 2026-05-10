@@ -3,6 +3,9 @@
  * Finale Logik inkl. Vorschau-Modals
  */
 
+/** Nennweiten DN 15 … DN 300 (übliche Normreihe, Anzeige wie in der Konfiguration: „DN 15“). */
+const STANDARD_DN_LABELS = [15, 20, 25, 32, 40, 50, 65, 80, 100, 125, 150, 200, 250, 300].map((n) => `DN ${n}`);
+
 class App {
     constructor() {
         this.config = APP_CONFIG;
@@ -40,7 +43,23 @@ class App {
         document.getElementById('exportMaterialBtn').onclick = () => this.exportMaterialList();
         document.getElementById('exportCalcBtn').onclick = () => this.exportCalculationList();
         document.getElementById('mobileRohrklasseBtn').onclick = () => this.toggleRohrklasseOverlay(true);
-        
+
+        document.addEventListener('mousedown', (e) => {
+            const wrap = document.getElementById('dnDropdownWrap');
+            if (!wrap || !wrap.classList.contains('open')) return;
+            if (wrap.contains(e.target)) return;
+            this.closeDnDropdown();
+        });
+        document.addEventListener('keydown', (e) => {
+            if (e.key !== 'Escape') return;
+            const wrap = document.getElementById('dnDropdownWrap');
+            if (wrap && wrap.classList.contains('open')) {
+                e.preventDefault();
+                this.closeDnDropdown();
+                document.getElementById('dnDropdownBtn')?.focus();
+            }
+        });
+
         const importBtn = document.getElementById('importJsonBtn');
         const fileInput = document.getElementById('importFileInput');
         importBtn.onclick = () => fileInput.click();
@@ -133,7 +152,11 @@ class App {
         this.activeRohrklasse = this.config.rohrklassen.find(rk => rk.id === id);
         document.getElementById('rohrklasseSelect').value = id;
         document.getElementById('activeRohrklasseName').innerText = this.activeRohrklasse.name;
-        this.renderDimensionen(); this.selectDn(this.activeRohrklasse.dimensionen[0]);
+        if (!this.activeDn) {
+            this.activeDn = this.activeRohrklasse.dimensionen[0] || STANDARD_DN_LABELS[0];
+        }
+        this.renderDimensionen();
+        this.selectDn(this.activeDn);
     }
 
     toggleRohrklasseOverlay(show) { document.getElementById('rohrklasseOverlay').style.display = show ? 'flex' : 'none'; }
@@ -152,12 +175,64 @@ class App {
 
     renderDimensionen() {
         const container = document.getElementById('dnSelector');
-        container.innerHTML = this.activeRohrklasse.dimensionen.map(dn => `<button class="dn-btn ${dn === this.activeDn ? 'active' : ''}" onclick="app.selectDn('${dn}')">${dn}</button>`).join('');
+        if (!this.activeRohrklasse) return;
+        container.innerHTML =
+            '<div class="dn-dropdown-wrap" id="dnDropdownWrap">' +
+            '<button type="button" class="dn-dropdown-trigger" id="dnDropdownBtn" aria-expanded="false" aria-haspopup="listbox" aria-controls="dnDropdownPanel">' +
+            '<span id="dnDropdownLabel"></span>' +
+            '<i data-lucide="chevron-down" class="dn-dropdown-chevron"></i>' +
+            '</button>' +
+            '<div class="dn-dropdown-panel" id="dnDropdownPanel" role="listbox" aria-label="Nennweite wählen"></div>' +
+            '</div>';
+
+        const panel = document.getElementById('dnDropdownPanel');
+        const label = document.getElementById('dnDropdownLabel');
+        label.textContent = this.activeDn || 'DN wählen';
+
+        STANDARD_DN_LABELS.forEach((dnLabel) => {
+            const opt = document.createElement('button');
+            opt.type = 'button';
+            opt.className = 'dn-dropdown-option' + (dnLabel === this.activeDn ? ' active' : '');
+            opt.setAttribute('role', 'option');
+            opt.textContent = dnLabel;
+            opt.addEventListener('click', () => {
+                this.selectDn(dnLabel);
+                this.closeDnDropdown();
+            });
+            panel.appendChild(opt);
+        });
+
+        document.getElementById('dnDropdownBtn').addEventListener('click', (e) => {
+            e.stopPropagation();
+            this.toggleDnDropdown();
+        });
+
+        lucide.createIcons();
+    }
+
+    toggleDnDropdown() {
+        const wrap = document.getElementById('dnDropdownWrap');
+        const btn = document.getElementById('dnDropdownBtn');
+        if (!wrap || !btn) return;
+        const open = !wrap.classList.contains('open');
+        wrap.classList.toggle('open', open);
+        btn.setAttribute('aria-expanded', open ? 'true' : 'false');
+    }
+
+    closeDnDropdown() {
+        const wrap = document.getElementById('dnDropdownWrap');
+        const btn = document.getElementById('dnDropdownBtn');
+        if (wrap) wrap.classList.remove('open');
+        if (btn) btn.setAttribute('aria-expanded', 'false');
     }
 
     selectDn(dn) {
         this.activeDn = dn;
-        document.querySelectorAll('.dn-btn').forEach(btn => btn.classList.toggle('active', btn.innerText === dn));
+        const label = document.getElementById('dnDropdownLabel');
+        if (label) label.textContent = dn || 'DN wählen';
+        document.querySelectorAll('#dnDropdownPanel .dn-dropdown-option').forEach((opt) => {
+            opt.classList.toggle('active', opt.textContent === dn);
+        });
         this.renderActionBoard();
     }
 
