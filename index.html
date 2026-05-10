@@ -1087,19 +1087,26 @@
       messpunkt: "Messpunkt (manuell)"
     };
 
+    function labelMitDn(kurz) {
+      var d = (active.dn || "").trim();
+      if (!d) return kurz;
+      var kompakt = d.replace(/\s+/g, "");
+      return kurz + " " + kompakt;
+    }
+
     document.querySelectorAll(".counter-btn").forEach(function (btn) {
       btn.addEventListener("click", function () {
         var action = btn.getAttribute("data-action");
         if (action === "rohr") {
-          addLineItem(active, "rohr", labels.rohr, 0.5);
+          addLineItem(active, "rohr", labelMitDn(labels.rohr), 0.5);
         } else if (action === "bogen") {
-          addLineItem(active, "bogen", labels.bogen, 1);
+          addLineItem(active, "bogen", labelMitDn(labels.bogen), 1);
         } else if (action === "t_stueck") {
-          addLineItem(active, "t_stueck", labels.t_stueck, 1);
+          addLineItem(active, "t_stueck", labelMitDn(labels.t_stueck), 1);
         } else if (action === "schweissnaht") {
-          addLineItem(active, "schweissnaht", labels.schweissnaht, 1);
+          addLineItem(active, "schweissnaht", labelMitDn(labels.schweissnaht), 1);
         } else if (action === "messpunkt") {
-          addLineItem(active, "messpunkt", labels.messpunkt, 1);
+          addLineItem(active, "messpunkt", labelMitDn(labels.messpunkt), 1);
         }
         saveToStorage();
         render();
