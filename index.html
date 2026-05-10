@@ -1,0 +1,145 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>Mobiles Aufmaß- & Kalkulations-Tool</title>
+  <link rel="stylesheet" href="style.css">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <script src="https://unpkg.com/lucide@latest"></script>
+</head>
+<body>
+  <div class="app-container">
+    <header>
+      <div class="header-top">
+        <h1 class="project-title" id="projectNameDisplay" onclick="app.renameProject()">Neues Projekt</h1>
+        <div class="section-controls">
+          <button class="btn-icon" title="Sektion hinzufügen" id="addSectionBtn">
+            <i data-lucide="plus"></i>
+          </button>
+          <select id="sectionSelect">
+            <option value="">Keine Sektion</option>
+          </select>
+          <button class="btn-icon" title="Sektion löschen" id="deleteSectionBtn">
+            <i data-lucide="trash-2"></i>
+          </button>
+        </div>
+      </div>
+      
+      <div class="header-bottom">
+        <select id="rohrklasseSelect" class="desktop-only">
+          <option value="">Rohrklasse wählen...</option>
+        </select>
+        <button id="mobileRohrklasseBtn" class="mobile-only rohrklasse-trigger">
+          <span id="activeRohrklasseName">Rohrklasse wählen...</span>
+          <i data-lucide="chevron-down"></i>
+        </button>
+      </div>
+    </header>
+
+    <main id="mainContent">
+      <div id="emptyState" class="empty-state">
+        <i data-lucide="folder-plus" size="48"></i>
+        <p>Bitte erstelle eine neue Sektion (z.B. Raum-Nr. oder Iso-Nr.), um mit dem Aufmaß zu beginnen.</p>
+        <button class="btn-primary" onclick="app.addSection()">Sektion hinzufügen</button>
+      </div>
+
+      <div id="appInterface" style="display: none;">
+        <!-- Zeitfaktoren -->
+        <section>
+          <div class="toolbar" id="zeitfaktorGroup"></div>
+        </section>
+
+        <!-- DN Auswahl -->
+        <section>
+          <div class="dn-selector" id="dnSelector"></div>
+        </section>
+
+        <!-- Sonderleistungen -->
+        <section>
+          <div class="toolbar" id="sonderleistungenToolbar"></div>
+        </section>
+
+        <!-- Aktions-Board -->
+        <div class="action-board" id="actionBoard"></div>
+      </div>
+    </main>
+
+    <aside class="live-list-container">
+      <div class="list-header">
+        <h3 id="currentSectionTitle" onclick="app.renameSection()" style="cursor: pointer;" title="Sektion umbenennen">Positionen</h3>
+        <button id="duplicateSectionBtn" class="btn-icon" title="Sektion duplizieren">
+          <i data-lucide="copy"></i>
+        </button>
+      </div>
+      
+      <div class="scroll-area">
+        <table class="list-table">
+          <thead>
+            <tr>
+              <th>Gegenstand</th>
+              <th>DN</th>
+              <th>Menge</th>
+              <th>Zeit</th>
+              <th></th>
+            </tr>
+          </thead>
+          <tbody id="positionTableBody"></tbody>
+        </table>
+      </div>
+
+      <div class="total-bar">
+        <span>Gesamt:</span>
+        <span id="totalTimeDisplay">0.0 min</span>
+      </div>
+      
+      <div class="footer-actions">
+        <button id="resetProjectBtn" style="background: var(--danger); color: white; border: none; flex: 0 0 auto; width: 44px;" title="Alles löschen"><i data-lucide="refresh-ccw"></i></button>
+        <button id="importJsonBtn" class="btn-secondary" title="Projekt laden">Laden</button>
+        <button id="exportJsonBtn" class="btn-secondary">Export</button>
+        <button id="exportMaterialBtn" class="btn-primary" style="background: var(--success);">Materialliste</button>
+        <button id="exportCalcBtn" class="btn-primary">Kalkulation</button>
+      </div>
+      <input type="file" id="importFileInput" style="display: none;" accept=".json">
+    </aside>
+  </div>
+
+  <!-- Modal für zweite DN -->
+  <div id="secondDnModal" class="modal-overlay">
+    <div id="secondDnModalContent" class="modal-content">
+      <h3 id="secondDnModalTitle">Ziel-DN wählen</h3>
+      <div id="modalError" class="modal-error"></div>
+      <div id="secondDnGrid" class="modal-grid"></div>
+      <button class="btn-secondary" style="width: 100%; margin-top: 20px;" onclick="app.toggleModal('secondDnModal', false)">Abbrechen</button>
+    </div>
+  </div>
+
+  <!-- Mobile Rohrklassen Overlay -->
+  <div id="rohrklasseOverlay" class="fullscreen-overlay">
+    <div class="overlay-content">
+      <div class="overlay-header">
+        <h2>Rohrklasse</h2>
+        <button class="btn-icon" onclick="app.toggleRohrklasseOverlay(false)"><i data-lucide="x"></i></button>
+      </div>
+      <div id="rohrklasseList" class="overlay-list"></div>
+    </div>
+  </div>
+
+  <!-- Export Vorschau Modal -->
+  <div id="exportModal" class="modal-overlay">
+    <div class="modal-content" style="max-width: 600px; width: 95%;">
+      <h3 id="exportModalTitle">Vorschau</h3>
+      <textarea id="exportTextarea" readonly style="width: 100%; height: 300px; margin-top: 15px; background: var(--bg-base); color: var(--text-main); border: 1px solid var(--border-subtle); padding: 10px; border-radius: 6px; font-family: monospace; font-size: 0.8rem; resize: none;"></textarea>
+      <div style="display: flex; gap: 10px; margin-top: 20px;">
+        <button class="btn-primary" style="flex: 1;" onclick="app.copyFromExportModal()">Kopieren</button>
+        <button class="btn-secondary" style="flex: 1;" onclick="app.toggleModal('exportModal', false)">Schließen</button>
+      </div>
+    </div>
+  </div>
+
+  <script src="config.js"></script>
+  <script src="app.js"></script>
+</body>
+</html>
