@@ -658,7 +658,7 @@
         };
       });
       parsed.sections.forEach(function (sec) {
-        mergeRohrDuplicates(sec);
+        mergeDuplicateLinesByType(sec);
       });
       if (typeof parsed.activeSectionId !== "string" || !parsed.sections.some(function (x) { return x.id === parsed.activeSectionId; })) {
         parsed.activeSectionId = parsed.sections[0] ? parsed.sections[0].id : null;
@@ -783,7 +783,7 @@
         };
       });
       newState.sections.forEach(function (sec) {
-        mergeRohrDuplicates(sec);
+        mergeDuplicateLinesByType(sec);
       });
       newState.activeSectionId =
         typeof parsed.activeSectionId === "string" &&
@@ -961,10 +961,10 @@
         '<div class="sidebar-label" style="margin-bottom:12px;text-transform:none;letter-spacing:normal">Zähler</div>' +
         '<div class="counter-grid">' +
         '<button type="button" class="counter-btn" data-action="rohr">Rohr +0,5 m<small>ein Eintrag, Meter summieren</small></button>' +
-        '<button type="button" class="counter-btn" data-action="bogen">Bogen<small>+1 Stück</small></button>' +
-        '<button type="button" class="counter-btn" data-action="t_stueck">T-Stück<small>+1 Stück</small></button>' +
-        '<button type="button" class="counter-btn" data-action="schweissnaht">Schweißnaht<small>+1 Stück</small></button>' +
-        '<button type="button" class="counter-btn" data-action="messpunkt">Messpunkt (manuell)<small>+1 Stück</small></button>' +
+        '<button type="button" class="counter-btn" data-action="bogen">Bogen<small>ein Eintrag, Stückzahl addieren</small></button>' +
+        '<button type="button" class="counter-btn" data-action="t_stueck">T-Stück<small>ein Eintrag, Stückzahl addieren</small></button>' +
+        '<button type="button" class="counter-btn" data-action="schweissnaht">Schweißnaht<small>ein Eintrag, Stückzahl addieren</small></button>' +
+        '<button type="button" class="counter-btn" data-action="messpunkt">Messpunkt (manuell)<small>ein Eintrag, Stückzahl addieren</small></button>' +
         "</div></div>" +
         '<div class="summary-bar">' +
         "<span>Rohr gesamt: <strong>" +
@@ -1063,34 +1063,23 @@
     });
   }
 
-  function addLineItem(section, type, label, value) {
-    section.lineItems.push({
-      id: uid(),
-      type: type,
-      label: label,
-      value: value,
-      createdAt: nowIso()
-    });
-  }
-
-  /** Ein Rohr-Eintrag pro Abschnitt: Meter werden addiert. */
-  function addOrMergeRohr(section, label) {
+  function addOrMergeLine(section, type, label, delta) {
     var existing = null;
     for (var i = 0; i < section.lineItems.length; i++) {
-      if (section.lineItems[i].type === "rohr") {
+      if (section.lineItems[i].type === type) {
         existing = section.lineItems[i];
         break;
       }
     }
     if (existing) {
-      existing.value += 0.5;
+      existing.value += delta;
       existing.label = label;
     } else {
       section.lineItems.push({
         id: uid(),
-        type: "rohr",
+        type: type,
         label: label,
-        value: 0.5,
+        value: delta,
         createdAt: nowIso()
       });
     }
@@ -1129,26 +1118,30 @@
     render();
   }
 
-  /** Mehrere Rohr-Zeilen (Altbestand) zu einer Zeile zusammenführen. */
-  function mergeRohrDuplicates(section) {
-    var parts = [];
-    for (var i = 0; i < section.lineItems.length; i++) {
-      if (section.lineItems[i].type === "rohr") parts.push(section.lineItems[i]);
+  /** Altbestand: mehrere Zeilen gleichen Typs zu einer Zeile summieren. */
+  function mergeDuplicateLinesByType(section) {
+    var types = ["rohr", "bogen", "t_stueck", "schweissnaht", "messpunkt"];
+    for (var t = 0; t < types.length; t++) {
+      var typ = types[t];
+      var parts = [];
+      for (var i = 0; i < section.lineItems.length; i++) {
+        if (section.lineItems[i].type === typ) parts.push(section.lineItems[i]);
+      }
+      if (parts.length <= 1) continue;
+      var sum = 0;
+      for (var j = 0; j < parts.length; j++) sum += parts[j].value;
+      var keep = parts[0];
+      section.lineItems = section.lineItems.filter(function (li) {
+        return li.type !== typ;
+      });
+      section.lineItems.push({
+        id: keep.id,
+        type: typ,
+        label: keep.label,
+        value: sum,
+        createdAt: keep.createdAt
+      });
     }
-    if (parts.length <= 1) return;
-    var sum = 0;
-    for (var j = 0; j < parts.length; j++) sum += parts[j].value;
-    var keep = parts[0];
-    section.lineItems = section.lineItems.filter(function (li) {
-      return li.type !== "rohr";
-    });
-    section.lineItems.push({
-      id: keep.id,
-      type: "rohr",
-      label: keep.label,
-      value: sum,
-      createdAt: keep.createdAt
-    });
   }
 
   function dnDropdownLabelText(dnStored) {
@@ -1236,15 +1229,15 @@
           return;
         }
         if (action === "rohr") {
-          addOrMergeRohr(active, labelMitDnUndMaterial("Rohr (m)"));
+          addOrMergeLine(active, "rohr", labelMitDnUndMaterial("Rohr (m)"), 0.5);
         } else if (action === "bogen") {
-          addLineItem(active, "bogen", labelMitDnUndMaterial(labels.bogen), 1);
+          addOrMergeLine(active, "bogen", labelMitDnUndMaterial(labels.bogen), 1);
         } else if (action === "t_stueck") {
-          addLineItem(active, "t_stueck", labelMitDnUndMaterial(labels.t_stueck), 1);
+          addOrMergeLine(active, "t_stueck", labelMitDnUndMaterial(labels.t_stueck), 1);
         } else if (action === "schweissnaht") {
-          addLineItem(active, "schweissnaht", labelMitDnUndMaterial(labels.schweissnaht), 1);
+          addOrMergeLine(active, "schweissnaht", labelMitDnUndMaterial(labels.schweissnaht), 1);
         } else if (action === "messpunkt") {
-          addLineItem(active, "messpunkt", labelMesspunktOhneDn(), 1);
+          addOrMergeLine(active, "messpunkt", labelMesspunktOhneDn(), 1);
         }
         saveToStorage();
         render();
