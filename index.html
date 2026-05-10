@@ -251,6 +251,96 @@
       outline-offset: 2px;
     }
 
+    .dn-dropdown {
+      position: relative;
+      z-index: 30;
+    }
+
+    .dn-dropdown-trigger {
+      width: 100%;
+      min-height: var(--touch);
+      padding: 0 14px;
+      border-radius: var(--radius);
+      border: 1px solid var(--border);
+      background: var(--bg);
+      color: var(--on-surface);
+      font-weight: 600;
+      font-size: 0.95rem;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 10px;
+      text-align: left;
+      transition: border-color 0.15s;
+    }
+
+    .dn-dropdown-trigger:hover {
+      border-color: rgba(33, 150, 243, 0.45);
+    }
+
+    .dn-dropdown-trigger:focus {
+      outline: none;
+    }
+
+    .dn-dropdown-trigger:focus-visible {
+      outline: 2px solid var(--primary);
+      outline-offset: 2px;
+    }
+
+    .dn-dropdown-chevron {
+      flex-shrink: 0;
+      font-size: 0.65rem;
+      color: var(--on-surface-muted);
+    }
+
+    .dn-dropdown-panel {
+      display: none;
+      position: absolute;
+      left: 0;
+      right: 0;
+      top: calc(100% + 6px);
+      max-height: min(46vh, 300px);
+      overflow-y: auto;
+      background: var(--surface-elevated);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      box-shadow: 0 12px 36px rgba(0, 0, 0, 0.5);
+      z-index: 200;
+    }
+
+    .dn-dropdown.open .dn-dropdown-panel {
+      display: block;
+    }
+
+    .dn-dropdown-option {
+      display: block;
+      width: 100%;
+      padding: 12px 14px;
+      border: none;
+      border-bottom: 1px solid var(--border);
+      background: transparent;
+      color: var(--on-surface);
+      font: inherit;
+      font-size: 0.9rem;
+      text-align: left;
+      cursor: pointer;
+    }
+
+    .dn-dropdown-option:last-child {
+      border-bottom: none;
+    }
+
+    .dn-dropdown-option:hover {
+      background: rgba(33, 150, 243, 0.12);
+    }
+
+    .dn-dropdown-option.active {
+      background: var(--primary-dim);
+      color: var(--primary);
+      font-weight: 600;
+    }
+
     .counter-grid {
       display: grid;
       grid-template-columns: 1fr;
@@ -436,6 +526,13 @@
   "use strict";
 
   var STORAGE_KEY = "rohrkalkulation_v2";
+
+  /** Nennweiten DN 15 … DN 300 (übliche Normreihe, Anzeige „DN 15“). */
+  var STANDARD_DN_LABELS = [15, 20, 25, 32, 40, 50, 65, 80, 100, 125, 150, 200, 250, 300].map(function (n) {
+    return "DN " + n;
+  });
+
+  var dnGlobalListenersBound = false;
 
   function uid() {
     return "id_" + Math.random().toString(36).slice(2, 11) + Date.now().toString(36);
@@ -801,12 +898,15 @@
         (active.material === "stahl" ? "active-stahl" : "") +
         '" data-material="stahl">Stahl</button>' +
         "</div></div>" +
-        '<div class="card field-row">' +
-        "<label for=\"dn-input\">DN (Nennweite für Export)</label>" +
-        '<input type="text" id="dn-input" value="' +
-        escapeAttr(active.dn) +
-        '" placeholder="z. B. DN 50" />' +
-        "</div>" +
+        '<div class="card">' +
+        '<div class="sidebar-label" style="margin-bottom:10px;text-transform:none;letter-spacing:normal">Nennweite (DN)</div>' +
+        '<div class="dn-dropdown" id="dnDropdownWrap">' +
+        '<button type="button" class="dn-dropdown-trigger" id="dnDropdownBtn" aria-expanded="false" aria-haspopup="listbox" aria-controls="dnDropdownPanel">' +
+        '<span id="dnDropdownLabel"></span>' +
+        '<span class="dn-dropdown-chevron" aria-hidden="true">▾</span>' +
+        "</button>" +
+        '<div class="dn-dropdown-panel" id="dnDropdownPanel" role="listbox" aria-label="Nennweite wählen"></div>' +
+        "</div></div>" +
         '<div class="card">' +
         '<div class="sidebar-label" style="margin-bottom:12px;text-transform:none;letter-spacing:normal">Zähler</div>' +
         '<div class="counter-grid">' +
@@ -909,6 +1009,64 @@
     });
   }
 
+  function dnDropdownLabelText(dnStored) {
+    var d = (dnStored || "").trim();
+    if (!d) return "DN wählen";
+    return d;
+  }
+
+  function setDnDropdownOpen(open) {
+    var wrap = document.getElementById("dnDropdownWrap");
+    var btn = document.getElementById("dnDropdownBtn");
+    if (!wrap || !btn) return;
+    wrap.classList.toggle("open", !!open);
+    btn.setAttribute("aria-expanded", open ? "true" : "false");
+  }
+
+  function wireDnDropdown(active) {
+    var wrap = document.getElementById("dnDropdownWrap");
+    var btn = document.getElementById("dnDropdownBtn");
+    var labelEl = document.getElementById("dnDropdownLabel");
+    var panel = document.getElementById("dnDropdownPanel");
+    if (!wrap || !btn || !labelEl || !panel) return;
+
+    labelEl.textContent = dnDropdownLabelText(active.dn);
+
+    panel.innerHTML = "";
+    var clearOpt = document.createElement("button");
+    clearOpt.type = "button";
+    clearOpt.className = "dn-dropdown-option" + (!(active.dn && String(active.dn).trim()) ? " active" : "");
+    clearOpt.setAttribute("role", "option");
+    clearOpt.textContent = "Keine Auswahl";
+    clearOpt.addEventListener("click", function () {
+      active.dn = "";
+      saveToStorage();
+      setDnDropdownOpen(false);
+      render();
+    });
+    panel.appendChild(clearOpt);
+
+    STANDARD_DN_LABELS.forEach(function (dnLabel) {
+      var opt = document.createElement("button");
+      opt.type = "button";
+      opt.className = "dn-dropdown-option" + (dnLabel === active.dn ? " active" : "");
+      opt.setAttribute("role", "option");
+      opt.textContent = dnLabel;
+      opt.addEventListener("click", function () {
+        active.dn = dnLabel;
+        saveToStorage();
+        setDnDropdownOpen(false);
+        render();
+      });
+      panel.appendChild(opt);
+    });
+
+    btn.onclick = function (e) {
+      e.stopPropagation();
+      setDnDropdownOpen(!wrap.classList.contains("open"));
+    };
+  }
+
   function wireMain(active) {
     document.querySelectorAll(".material-btn").forEach(function (btn) {
       btn.addEventListener("click", function () {
@@ -919,14 +1077,7 @@
       });
     });
 
-    var dnInput = document.getElementById("dn-input");
-    dnInput.addEventListener("input", function () {
-      active.dn = dnInput.value;
-      saveToStorage();
-    });
-    dnInput.addEventListener("blur", function () {
-      saveToStorage();
-    });
+    wireDnDropdown(active);
 
     var labels = {
       rohr: "Rohr +0,5 m",
@@ -996,6 +1147,26 @@
   }
 
   function init() {
+    if (!dnGlobalListenersBound) {
+      dnGlobalListenersBound = true;
+      document.addEventListener("mousedown", function (ev) {
+        var w = document.getElementById("dnDropdownWrap");
+        if (!w || !w.classList.contains("open")) return;
+        if (w.contains(ev.target)) return;
+        setDnDropdownOpen(false);
+      });
+      document.addEventListener("keydown", function (e) {
+        if (e.key !== "Escape") return;
+        var w = document.getElementById("dnDropdownWrap");
+        if (w && w.classList.contains("open")) {
+          e.preventDefault();
+          setDnDropdownOpen(false);
+          var b = document.getElementById("dnDropdownBtn");
+          if (b) b.focus();
+        }
+      });
+    }
+
     loadFromStorage();
     if (typeof state.projectName !== "string") state.projectName = "";
     if (!String(state.projectName).trim()) {
