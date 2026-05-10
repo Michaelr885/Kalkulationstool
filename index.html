@@ -636,6 +636,35 @@
       color: var(--danger);
     }
 
+    .btn-accept-flash {
+      position: fixed;
+      width: 12px;
+      height: 12px;
+      border-radius: 50%;
+      background: #10b981;
+      box-shadow:
+        0 0 10px #10b981,
+        0 0 22px rgba(16, 185, 129, 0.7);
+      pointer-events: none;
+      z-index: 12000;
+      animation: btnAcceptFlash 0.58s ease-out forwards;
+    }
+
+    @keyframes btnAcceptFlash {
+      0% {
+        opacity: 0;
+        transform: scale(0.35);
+      }
+      22% {
+        opacity: 1;
+        transform: scale(1.08);
+      }
+      100% {
+        opacity: 0;
+        transform: scale(1.45);
+      }
+    }
+
     h1.page-title {
       margin: 0;
       font-size: 1.32rem;
@@ -669,6 +698,42 @@
   });
 
   var dnGlobalListenersBound = false;
+  var buttonFlashFeedbackBound = false;
+
+  function flashButtonAccepted(btn) {
+    if (!btn || typeof btn.getBoundingClientRect !== "function") return;
+    if (btn.disabled) return;
+    var r = btn.getBoundingClientRect();
+    if (r.width < 2 || r.height < 2) return;
+    var ox = Math.min(10, Math.max(5, r.width * 0.08));
+    var oy = Math.min(10, Math.max(5, r.height * 0.1));
+    var dot = document.createElement("div");
+    dot.className = "btn-accept-flash";
+    dot.setAttribute("aria-hidden", "true");
+    dot.style.left = r.left + ox + "px";
+    dot.style.top = r.top + oy + "px";
+    document.body.appendChild(dot);
+    setTimeout(function () {
+      if (dot.parentNode) dot.parentNode.removeChild(dot);
+    }, 620);
+  }
+
+  function bindButtonFlashFeedback() {
+    if (buttonFlashFeedbackBound) return;
+    buttonFlashFeedbackBound = true;
+    document.addEventListener(
+      "click",
+      function (e) {
+        var el = e.target;
+        if (!el || typeof el.closest !== "function") return;
+        var btn = el.closest("button");
+        if (!btn) return;
+        if (btn.disabled || btn.getAttribute("aria-disabled") === "true") return;
+        flashButtonAccepted(btn);
+      },
+      true
+    );
+  }
 
   function uid() {
     return "id_" + Math.random().toString(36).slice(2, 11) + Date.now().toString(36);
@@ -1617,6 +1682,8 @@
   }
 
   function init() {
+    bindButtonFlashFeedback();
+
     if (!dnGlobalListenersBound) {
       dnGlobalListenersBound = true;
       document.addEventListener("mousedown", function (ev) {
