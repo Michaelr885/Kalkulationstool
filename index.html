@@ -150,6 +150,28 @@
       color: var(--primary);
     }
 
+    .btn-section-delete {
+      flex: 0 0 var(--touch);
+      width: var(--touch);
+      min-height: var(--touch);
+      padding: 0;
+      border-radius: var(--radius);
+      border: 1px solid var(--border);
+      background: var(--surface-elevated);
+      color: var(--on-surface-muted);
+      cursor: pointer;
+      font-size: 1.15rem;
+      font-weight: 600;
+      line-height: 1;
+      transition: border-color 0.15s, background 0.15s, color 0.15s;
+    }
+
+    .btn-section-delete:hover {
+      border-color: var(--danger);
+      color: var(--danger);
+      background: rgba(207, 102, 121, 0.12);
+    }
+
     .toolbar {
       display: flex;
       flex-direction: column;
@@ -1293,8 +1315,33 @@
         render();
       });
 
+      var del = document.createElement("button");
+      del.type = "button";
+      del.className = "btn-section-delete";
+      del.setAttribute("aria-label", "Abschnitt löschen");
+      del.setAttribute("title", "Abschnitt löschen");
+      del.textContent = "\u00d7";
+      del.addEventListener("click", function (e) {
+        e.stopPropagation();
+        var lastOne = state.sections.length <= 1;
+        var msg = lastOne
+          ? 'Den letzten Abschnitt "' + sec.name + '" löschen? Danach gibt es vorerst keine Abschnitte mehr (Sie können sofort einen neuen anlegen).'
+          : 'Abschnitt "' + sec.name + '" wirklich löschen?';
+        if (!confirm(msg)) return;
+        var wasId = sec.id;
+        state.sections = state.sections.filter(function (x) {
+          return x.id !== wasId;
+        });
+        if (state.activeSectionId === wasId) {
+          state.activeSectionId = state.sections[0] ? state.sections[0].id : null;
+        }
+        saveToStorage();
+        render();
+      });
+
       row.appendChild(btn);
       row.appendChild(ren);
+      row.appendChild(del);
       list.appendChild(row);
     });
 
