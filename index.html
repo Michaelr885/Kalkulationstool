@@ -819,10 +819,10 @@
       var schweiss = countType(sec, "schweissnaht");
       if (schweiss > 0) rows.push([sec.name, mat, dn, "Schweißnaht", String(schweiss)]);
       var messMan = countType(sec, "messpunkt");
-      if (messMan > 0) rows.push([sec.name, mat, dn, "Messpunkt (manuell)", String(messMan)]);
       var messAuto = autoMesspunkte(sec);
-      if (messAuto > 0) {
-        rows.push([sec.name, mat, dn, "Messpunkt (automatisch)", String(messAuto)]);
+      var messGesamt = messMan + messAuto;
+      if (messGesamt > 0) {
+        rows.push([sec.name, mat, dn, "Messpunkt", String(messGesamt)]);
       }
     });
     return rows;
