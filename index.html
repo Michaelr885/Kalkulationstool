@@ -1360,6 +1360,14 @@
       return kurz + dnPart + " · " + mat;
     }
 
+    /** Demontage: Bauteil · DN… · Demontage · Material (z. B. Bogen · DN15 · Demontage · Edelstahl). */
+    function labelDemontageZeile(bauteilName) {
+      var d = (active.dn || "").trim();
+      var dnKompakt = d ? d.replace(/\s+/g, "") : "";
+      var mat = materialLabel(active.material);
+      return bauteilName + " · " + dnKompakt + " · Demontage · " + mat;
+    }
+
     function labelMesspunktManuell() {
       return labels.messpunkt + " · " + materialLabel(active.material);
     }
@@ -1382,13 +1390,13 @@
         } else if (action === "messpunkt") {
           addOrMergeLine(active, "messpunkt", labelMesspunktManuell(), 1);
         } else if (action === "rohr_demontage") {
-          addOrMergeLine(active, "rohr_demontage", labelMitDnUndMaterial("Rohr (m) · Demontage"), 0.5);
+          addOrMergeLine(active, "rohr_demontage", labelDemontageZeile("Rohr (m)"), 0.5);
         } else if (action === "bogen_demontage") {
-          addOrMergeLine(active, "bogen_demontage", labelMitDnUndMaterial(labels.bogen + " · Demontage"), 1);
+          addOrMergeLine(active, "bogen_demontage", labelDemontageZeile(labels.bogen), 1);
         } else if (action === "t_stueck_demontage") {
-          addOrMergeLine(active, "t_stueck_demontage", labelMitDnUndMaterial(labels.t_stueck + " · Demontage"), 1);
+          addOrMergeLine(active, "t_stueck_demontage", labelDemontageZeile(labels.t_stueck), 1);
         } else if (action === "schweissnaht_demontage") {
-          addOrMergeLine(active, "schweissnaht_demontage", labelMitDnUndMaterial(labels.schweissnaht + " · Demontage"), 1);
+          addOrMergeLine(active, "schweissnaht_demontage", labelDemontageZeile(labels.schweissnaht), 1);
         }
         saveToStorage();
         render();
