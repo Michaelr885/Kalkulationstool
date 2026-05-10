@@ -415,11 +415,47 @@
       align-items: center;
       justify-content: space-between;
       gap: 12px;
+      flex-wrap: wrap;
       min-height: var(--touch);
       padding: 10px 14px;
       background: var(--surface-elevated);
       border-radius: 10px;
       border: 1px solid var(--border);
+    }
+
+    .line-item-main {
+      flex: 1;
+      min-width: 140px;
+    }
+
+    .line-item-edit {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      flex-shrink: 0;
+    }
+
+    .line-item-qty {
+      min-height: 44px;
+      width: 5.5rem;
+      padding: 0 10px;
+      border-radius: var(--radius);
+      border: 1px solid var(--border);
+      background: var(--bg);
+      color: var(--on-surface);
+      font-size: 1rem;
+      text-align: right;
+    }
+
+    .line-item-qty:focus {
+      outline: 2px solid var(--primary);
+      outline-offset: 2px;
+    }
+
+    .line-item-unit {
+      font-size: 0.85rem;
+      color: var(--on-surface-muted);
+      min-width: 2rem;
     }
 
     .line-item-meta {
@@ -621,6 +657,9 @@
             : []
         };
       });
+      parsed.sections.forEach(function (sec) {
+        mergeRohrDuplicates(sec);
+      });
       if (typeof parsed.activeSectionId !== "string" || !parsed.sections.some(function (x) { return x.id === parsed.activeSectionId; })) {
         parsed.activeSectionId = parsed.sections[0] ? parsed.sections[0].id : null;
       }
@@ -742,6 +781,9 @@
               })
             : []
         };
+      });
+      newState.sections.forEach(function (sec) {
+        mergeRohrDuplicates(sec);
       });
       newState.activeSectionId =
         typeof parsed.activeSectionId === "string" &&
@@ -918,7 +960,7 @@
         '<div class="card">' +
         '<div class="sidebar-label" style="margin-bottom:12px;text-transform:none;letter-spacing:normal">Zähler</div>' +
         '<div class="counter-grid">' +
-        '<button type="button" class="counter-btn" data-action="rohr">Rohr +0,5 m<small>+0,5 m pro Klick</small></button>' +
+        '<button type="button" class="counter-btn" data-action="rohr">Rohr +0,5 m<small>ein Eintrag, Meter summieren</small></button>' +
         '<button type="button" class="counter-btn" data-action="bogen">Bogen<small>+1 Stück</small></button>' +
         '<button type="button" class="counter-btn" data-action="t_stueck">T-Stück<small>+1 Stück</small></button>' +
         '<button type="button" class="counter-btn" data-action="schweissnaht">Schweißnaht<small>+1 Stück</small></button>' +
@@ -1031,6 +1073,84 @@
     });
   }
 
+  /** Ein Rohr-Eintrag pro Abschnitt: Meter werden addiert. */
+  function addOrMergeRohr(section, label) {
+    var existing = null;
+    for (var i = 0; i < section.lineItems.length; i++) {
+      if (section.lineItems[i].type === "rohr") {
+        existing = section.lineItems[i];
+        break;
+      }
+    }
+    if (existing) {
+      existing.value += 0.5;
+      existing.label = label;
+    } else {
+      section.lineItems.push({
+        id: uid(),
+        type: "rohr",
+        label: label,
+        value: 0.5,
+        createdAt: nowIso()
+      });
+    }
+  }
+
+  function updateLineItemValue(section, lineId, rawStr) {
+    var li = null;
+    for (var j = 0; j < section.lineItems.length; j++) {
+      if (section.lineItems[j].id === lineId) {
+        li = section.lineItems[j];
+        break;
+      }
+    }
+    if (!li) return;
+    var v = parseFloat(String(rawStr).replace(",", "."));
+    if (isNaN(v)) return;
+    if (li.type === "rohr") {
+      if (v <= 0) {
+        section.lineItems = section.lineItems.filter(function (x) {
+          return x.id !== lineId;
+        });
+      } else {
+        li.value = v;
+      }
+    } else {
+      v = Math.round(v);
+      if (v <= 0) {
+        section.lineItems = section.lineItems.filter(function (x) {
+          return x.id !== lineId;
+        });
+      } else {
+        li.value = v;
+      }
+    }
+    saveToStorage();
+    render();
+  }
+
+  /** Mehrere Rohr-Zeilen (Altbestand) zu einer Zeile zusammenführen. */
+  function mergeRohrDuplicates(section) {
+    var parts = [];
+    for (var i = 0; i < section.lineItems.length; i++) {
+      if (section.lineItems[i].type === "rohr") parts.push(section.lineItems[i]);
+    }
+    if (parts.length <= 1) return;
+    var sum = 0;
+    for (var j = 0; j < parts.length; j++) sum += parts[j].value;
+    var keep = parts[0];
+    section.lineItems = section.lineItems.filter(function (li) {
+      return li.type !== "rohr";
+    });
+    section.lineItems.push({
+      id: keep.id,
+      type: "rohr",
+      label: keep.label,
+      value: sum,
+      createdAt: keep.createdAt
+    });
+  }
+
   function dnDropdownLabelText(dnStored) {
     var d = (dnStored || "").trim();
     if (!d) return "DN wählen";
@@ -1116,7 +1236,7 @@
           return;
         }
         if (action === "rohr") {
-          addLineItem(active, "rohr", labelMitDnUndMaterial(labels.rohr), 0.5);
+          addOrMergeRohr(active, labelMitDnUndMaterial("Rohr (m)"));
         } else if (action === "bogen") {
           addLineItem(active, "bogen", labelMitDnUndMaterial(labels.bogen), 1);
         } else if (action === "t_stueck") {
@@ -1145,28 +1265,70 @@
       .forEach(function (li) {
         var row = document.createElement("div");
         row.className = "line-item";
-        var valStr =
-          li.type === "rohr"
-            ? formatDeDecimal(li.value) + " m"
-            : "+" + String(li.value);
-        row.innerHTML =
-          "<div><div>" +
-          escapeHtml(li.label) +
-          '</div><div class="line-item-meta">' +
-          escapeHtml(new Date(li.createdAt).toLocaleString("de-DE")) +
-          " · " +
-          escapeHtml(valStr) +
-          "</div></div>" +
-          '<button type="button" class="btn btn-danger" style="min-height:44px;padding:0 14px" data-del="' +
-          escapeAttr(li.id) +
-          '">Löschen</button>';
-        row.querySelector("[data-del]").addEventListener("click", function () {
+        var isRohr = li.type === "rohr";
+        var unit = isRohr ? "m" : "Stk";
+
+        var main = document.createElement("div");
+        main.className = "line-item-main";
+        var titleEl = document.createElement("div");
+        titleEl.textContent = li.label;
+        var meta = document.createElement("div");
+        meta.className = "line-item-meta";
+        meta.textContent = new Date(li.createdAt).toLocaleString("de-DE");
+        main.appendChild(titleEl);
+        main.appendChild(meta);
+
+        var editWrap = document.createElement("div");
+        editWrap.className = "line-item-edit";
+        var input = document.createElement("input");
+        input.type = "number";
+        input.className = "line-item-qty";
+        input.setAttribute("aria-label", isRohr ? "Meter Rohrleitung" : "Stückzahl");
+        if (isRohr) {
+          input.step = "0.1";
+          input.min = "0";
+        } else {
+          input.step = "1";
+          input.min = "0";
+        }
+        input.value = isRohr ? String(li.value) : String(Math.round(li.value));
+
+        var unitSpan = document.createElement("span");
+        unitSpan.className = "line-item-unit";
+        unitSpan.textContent = unit;
+
+        editWrap.appendChild(input);
+        editWrap.appendChild(unitSpan);
+
+        var delBtn = document.createElement("button");
+        delBtn.type = "button";
+        delBtn.className = "btn btn-danger";
+        delBtn.style.minHeight = "44px";
+        delBtn.style.padding = "0 14px";
+        delBtn.textContent = "Löschen";
+
+        var lid = li.id;
+        delBtn.addEventListener("click", function () {
           active.lineItems = active.lineItems.filter(function (x) {
-            return x.id !== li.id;
+            return x.id !== lid;
           });
           saveToStorage();
           render();
         });
+
+        input.addEventListener("change", function () {
+          updateLineItemValue(active, lid, this.value);
+        });
+        input.addEventListener("keydown", function (e) {
+          if (e.key === "Enter") {
+            e.preventDefault();
+            this.blur();
+          }
+        });
+
+        row.appendChild(main);
+        row.appendChild(editWrap);
+        row.appendChild(delBtn);
         container.appendChild(row);
       });
   }
