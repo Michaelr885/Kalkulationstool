@@ -700,11 +700,15 @@
     return n;
   }
 
-  /** Pro angefangene 6 m Rohr: 1 Messpunkt (0,1–6,0 m → 1; 6,1–12,0 → 2 …). */
+  /**
+   * Automatische Messpunkte: je angefangene 6 m Rohr + je 1 pro Bogen + je 1 pro T-Stück.
+   */
   function autoMesspunkte(section) {
     var rohr = sumRohrMeters(section);
-    if (rohr <= 0) return 0;
-    return Math.ceil(rohr / 6);
+    var ausRohr = rohr > 0 ? Math.ceil(rohr / 6) : 0;
+    var bogen = countType(section, "bogen");
+    var tStueck = countType(section, "t_stueck");
+    return ausRohr + bogen + tStueck;
   }
 
   function materialLabel(m) {
@@ -972,7 +976,7 @@
         " m</strong></span>" +
         "<span>Automatische Messpunkte: <strong>" +
         String(autoM) +
-        "</strong> <small style=\"color:var(--on-surface-muted)\">(je 6 m Rohr)</small></span>" +
+        "</strong> <small style=\"color:var(--on-surface-muted)\">(6 m Rohr, je Bogen, je T-Stück)</small></span>" +
         "</div>" +
         '<div class="card">' +
         '<div class="list-header"><h2>Einträge in diesem Abschnitt</h2></div>' +
