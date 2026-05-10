@@ -450,6 +450,33 @@
       margin-top: 4px;
     }
 
+    .counter-split-wrap {
+      display: flex;
+      gap: 0;
+      min-height: 56px;
+      border-radius: var(--radius);
+      border: 1px solid var(--border);
+      background: var(--surface-elevated);
+      overflow: hidden;
+    }
+
+    .counter-split-wrap .counter-btn {
+      flex: 1;
+      min-width: 0;
+      min-height: 56px;
+      border: none;
+      border-radius: 0;
+      margin: 0;
+    }
+
+    .counter-split-wrap .counter-btn:first-child {
+      border-right: 1px solid var(--border);
+    }
+
+    .counter-split-wrap .counter-btn:hover {
+      background: rgba(33, 150, 243, 0.08);
+    }
+
     .summary-bar {
       display: flex;
       flex-wrap: wrap;
@@ -927,6 +954,8 @@
       if (tStueckD > 0) rows.push([sec.name, mat, dn, "Demontage", "T-Stück Demontage", String(tStueckD)]);
       var schweiss = countType(sec, "schweissnaht");
       if (schweiss > 0) rows.push([sec.name, mat, dn, "Montage", "Schweißnaht Montage", String(schweiss)]);
+      var montNaht = countType(sec, "montage_naht");
+      if (montNaht > 0) rows.push([sec.name, mat, dn, "Montage", "Montage-Naht Montage", String(montNaht)]);
       var schweissD = countType(sec, "schweissnaht_demontage");
       if (schweissD > 0) rows.push([sec.name, mat, dn, "Demontage", "Schweißnaht Demontage", String(schweissD)]);
       var flansch = countType(sec, "flansch");
@@ -1096,7 +1125,10 @@
           '<button type="button" class="counter-btn" data-action="rohr">Rohr +0,5 m<small>ein Eintrag, Meter summieren</small></button>' +
           '<button type="button" class="counter-btn" data-action="bogen">Bogen<small>ein Eintrag, Stückzahl addieren</small></button>' +
           '<button type="button" class="counter-btn" data-action="t_stueck">T-Stück<small>ein Eintrag, Stückzahl addieren</small></button>' +
-          '<button type="button" class="counter-btn" data-action="schweissnaht">Schweißnaht<small>ein Eintrag, Stückzahl addieren</small></button>' +
+          '<div class="counter-split-wrap">' +
+          '<button type="button" class="counter-btn" data-action="schweissnaht">Schweißnaht<small>+1 Stück</small></button>' +
+          '<button type="button" class="counter-btn" data-action="montage_naht">Montage-Naht<small>+1 Stück</small></button>' +
+          "</div>" +
           '<button type="button" class="counter-btn" data-action="flansch">Flanschverbindung<small>ein Eintrag, Stückzahl addieren</small></button>' +
           '<button type="button" class="counter-btn" data-action="armatur">Armatur<small>ein Eintrag, Stückzahl addieren</small></button>' +
           '<button type="button" class="counter-btn" data-action="messpunkt">Messpunkt (manuell)<small>ein Eintrag, Stückzahl addieren</small></button>' +
@@ -1105,9 +1137,6 @@
         html +=
           '<div class="counter-grid" id="counter-demontage">' +
           '<button type="button" class="counter-btn" data-action="rohr_demontage">Rohr +0,5 m<small>Demontage · ein Eintrag</small></button>' +
-          '<button type="button" class="counter-btn" data-action="bogen_demontage">Bogen<small>Demontage · ein Eintrag</small></button>' +
-          '<button type="button" class="counter-btn" data-action="t_stueck_demontage">T-Stück<small>Demontage · ein Eintrag</small></button>' +
-          '<button type="button" class="counter-btn" data-action="schweissnaht_demontage">Schweißnaht<small>Demontage · ein Eintrag</small></button>' +
           '<button type="button" class="counter-btn" data-action="flansch_demontage">Flanschverbindung<small>Demontage · ein Eintrag</small></button>' +
           '<button type="button" class="counter-btn" data-action="armatur_demontage">Armatur<small>Demontage · ein Eintrag</small></button>' +
           "</div>";
@@ -1319,6 +1348,7 @@
       "bogen",
       "t_stueck",
       "schweissnaht",
+      "montage_naht",
       "messpunkt",
       "rohr_demontage",
       "bogen_demontage",
@@ -1424,6 +1454,7 @@
       bogen: "Bogen",
       t_stueck: "T-Stück",
       schweissnaht: "Schweißnaht",
+      montage_naht: "Montage-Naht",
       flansch: "Flanschverbindung",
       armatur: "Armatur",
       messpunkt: "Messpunkt (manuell)"
@@ -1463,6 +1494,8 @@
           addOrMergeLine(active, "t_stueck", labelMitDnUndMaterial(labels.t_stueck), 1);
         } else if (action === "schweissnaht") {
           addOrMergeLine(active, "schweissnaht", labelMitDnUndMaterial(labels.schweissnaht), 1);
+        } else if (action === "montage_naht") {
+          addOrMergeLine(active, "montage_naht", labelMitDnUndMaterial(labels.montage_naht), 1);
         } else if (action === "flansch") {
           addOrMergeLine(active, "flansch", labelMitDnUndMaterial(labels.flansch), 1);
         } else if (action === "armatur") {
@@ -1471,12 +1504,6 @@
           addOrMergeLine(active, "messpunkt", labelMesspunktManuell(), 1);
         } else if (action === "rohr_demontage") {
           addOrMergeLine(active, "rohr_demontage", labelDemontageZeile("Rohr (m)"), 0.5);
-        } else if (action === "bogen_demontage") {
-          addOrMergeLine(active, "bogen_demontage", labelDemontageZeile(labels.bogen), 1);
-        } else if (action === "t_stueck_demontage") {
-          addOrMergeLine(active, "t_stueck_demontage", labelDemontageZeile(labels.t_stueck), 1);
-        } else if (action === "schweissnaht_demontage") {
-          addOrMergeLine(active, "schweissnaht_demontage", labelDemontageZeile(labels.schweissnaht), 1);
         } else if (action === "flansch_demontage") {
           addOrMergeLine(active, "flansch_demontage", labelDemontageZeile(labels.flansch), 1);
         } else if (action === "armatur_demontage") {
